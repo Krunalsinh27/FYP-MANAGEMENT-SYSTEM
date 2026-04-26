@@ -72,7 +72,7 @@ export const deleteTeacher = createAsyncThunk("deleteTeacher", async(id, thunkAp
 export const getAllUsers = createAsyncThunk("getAllUsers", async(id, thunkApi) => {
   try {
     const res = await axiosInstance.get(`/admin/users`);
-    return res.data.data;
+    return res.data.data.users;
   } catch (error) {
     toast.error(error.response?.data?.message || "Failed to fetch users");
     return thunkApi.rejectWithValue(error.response?.data?.message);
