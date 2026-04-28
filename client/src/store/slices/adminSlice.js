@@ -17,7 +17,7 @@ export const createStudent = createAsyncThunk("createStudent", async(data, thunk
 export const updateStudent = createAsyncThunk("updateStudent", async({id, data}, thunkApi) => {
   try {
     const res = await axiosInstance.put(`/admin/update-student/${id}`, data);
-    toast.seccess(res.data.message || "Student updated successfully");
+    toast.success(res.data.message || "Student updated successfully");
     return res.data.data.user;
   } catch (error) {
     toast.error(error.response?.data?.message || "Failed to update student");
@@ -28,7 +28,7 @@ export const updateStudent = createAsyncThunk("updateStudent", async({id, data},
 export const deleteStudent = createAsyncThunk("deleteStudent", async(id, thunkApi) => {
   try {
     const res = await axiosInstance.delete(`/admin/delete-student/${id}`);
-    toast.seccess(res.data.message || "Student deleted successfully");
+    toast.success(res.data.message || "Student deleted successfully");
     return id;
   } catch (error) {
     toast.error(error.response?.data?.message || "Failed to delete student");
@@ -39,7 +39,7 @@ export const deleteStudent = createAsyncThunk("deleteStudent", async(id, thunkAp
 export const createTeacher = createAsyncThunk("createTeacher", async(data, thunkApi) => {
   try {
     const res = await axiosInstance.post("/admin/create-teacher", data);
-    toast.seccess(res.data.message || "Teacher created successfully");
+    toast.success(res.data.message || "Teacher created successfully");
     return res.data.data.user;
   } catch (error) {
     toast.error(error.response?.data?.message || "Failed to create Teacher");
@@ -50,7 +50,7 @@ export const createTeacher = createAsyncThunk("createTeacher", async(data, thunk
 export const updateTeacher = createAsyncThunk("updateTeacher", async({id, data}, thunkApi) => {
   try {
     const res = await axiosInstance.put(`/admin/update-teacher/${id}`, data);
-    toast.seccess(res.data.message || "Teacher updated successfully");
+    toast.success(res.data.message || "Teacher updated successfully");
     return res.data.data.user;
   } catch (error) {
     toast.error(error.response?.data?.message || "Failed to update teacher");
@@ -61,7 +61,7 @@ export const updateTeacher = createAsyncThunk("updateTeacher", async({id, data},
 export const deleteTeacher = createAsyncThunk("deleteTeacher", async(id, thunkApi) => {
   try {
     const res = await axiosInstance.delete(`/admin/delete-teacher/${id}`);
-    toast.seccess(res.data.message || "Teacher deleted successfully");
+    toast.success(res.data.message || "Teacher deleted successfully");
     return id;
   } catch (error) {
     toast.error(error.response?.data?.message || "Failed to delete teacher");
@@ -96,7 +96,7 @@ const adminSlice = createSlice({
     .addCase(createStudent.fulfilled, (state, action) => {
       if(state.users) state.users.unshift(action.payload);
     })
-    .addCase(updateStudent.fulfilled, (state) => {
+    .addCase(updateStudent.fulfilled, (state, action) => {
       if(state.users){
         state.users = state.users.map((u) => 
           u._id === action.payload._id ? { ...u, ...action.payload } : u
@@ -107,12 +107,12 @@ const adminSlice = createSlice({
       if(state.users) state.users = state.users.filter((u) => u._id !== action.payload);
     })
     .addCase(getAllUsers.fulfilled, (state, action) => {
-      state.users = action.payload.users;
+      state.users = action.payload;
     })
     .addCase(createTeacher.fulfilled, (state, action) => {
       if(state.users) state.users.unshift(action.payload);
     })
-    .addCase(updateTeacher.fulfilled, (state) => {
+    .addCase(updateTeacher.fulfilled, (state, action) => {
       if(state.users){
         state.users = state.users.map((u) => 
           u._id === action.payload._id ? { ...u, ...action.payload } : u
@@ -120,6 +120,12 @@ const adminSlice = createSlice({
       }
     })
     .addCase(createTeacher.rejected, (state) => {
+      if(state.users) state.users = state.users.filter((u) => u._id !== action.payload);
+    })
+    .addCase(deleteStudent.fulfilled, (state, action) => {
+      if(state.users) state.users = state.users.filter((u) => u._id !== action.payload);
+    })
+    .addCase(deleteTeacher.fulfilled, (state, action) => {
       if(state.users) state.users = state.users.filter((u) => u._id !== action.payload);
     });
   },

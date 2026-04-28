@@ -13,7 +13,7 @@ export const updateUser = async (id, userData) => {
     try {
         return await User.findByIdAndUpdate(id, userData, {
             new: true,
-            runValidators: true,
+            runValidators: false,
         }).select("-password");
     } catch (error) {
         throw new Error(`Error updating user: ${error.message}`);
@@ -35,9 +35,11 @@ export const deleteUser = async (id) => {
 };
 
 export const getAllUsers = async () => {
-    const query = {role: {$ne: "Admin"}};
+    const query = { role: { $ne: "Admin" } };
 
-    const users = await User.find(query).select("-password -resetPasswordToken -resetPasswordExpire").sort({ createdAt: -1 });
+    const users = await User.find(query)
+        .select("-password -resetPasswordToken -resetPasswordExpire")
+        .sort({ createdAt: -1 });
 
-    return { users};
+    return users;
 };

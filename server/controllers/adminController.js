@@ -26,6 +26,7 @@ export const updateStudent = asyncHandler(async (req, res, next) => {
     const {id} = req.params;
     const updateData = { ...req.body };
     delete updateData.role; //Prevent role update
+    delete updateData.password
 
     const user = await userServices.updateUser(id, updateData);
     if(!user){
@@ -57,8 +58,9 @@ export const deleteStudent = asyncHandler(async (req, res, next) => {
 });
 
 export const createTeacher = asyncHandler(async (req, res, next) => {
-    const { name, email, password, department, maxStudents, experties } = req.body;
-    if(!name || !email || !password || !department || !maxStudents || !experties){
+    const { name, email, password, department, maxStudents, expertise, experties } = req.body;
+    const expertiseValue = expertise ?? experties;
+    if(!name || !email || !password || !department || !maxStudents || !expertiseValue){
         return next(new ErrorHandler("Please provide all required fields", 400));
     }
     const user = await userServices.createUser({
@@ -67,10 +69,10 @@ export const createTeacher = asyncHandler(async (req, res, next) => {
         password, 
         department,
         maxStudents,
-        expertise: Array.isArray(experties) 
-            ? experties 
-            : typeof experties === "string" && experties.trim() !== "" 
-            ? experties.split(",").map(s=> s.trim())
+        expertise: Array.isArray(expertiseValue) 
+            ? expertiseValue 
+            : typeof expertiseValue === "string" && expertiseValue.trim() !== "" 
+            ? expertiseValue.split(",").map((s) => s.trim())
             : [], 
         role: "Teacher",
     });

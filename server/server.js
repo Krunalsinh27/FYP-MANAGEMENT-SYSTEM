@@ -1,6 +1,8 @@
 import { connectDB } from "./config/db.js";
 import app from "./app.js";
 
+// app.use("/api/v1/admin", adminRoutes);
+
 
 // --------------------
 // DATABASE CONNECTION
