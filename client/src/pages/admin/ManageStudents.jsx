@@ -31,9 +31,9 @@ const ManageStudents = () => {
     department: "",
   });
 
-  useEffect(() => {
-    dispatch(getAllUsers());
-  }, [dispatch]);
+  // useEffect(() => {
+  //   dispatch(getAllUsers());
+  // }, [dispatch]);
 
   const students = useMemo(() => {
     const safeUsers = Array.isArray(users) ? users : [];

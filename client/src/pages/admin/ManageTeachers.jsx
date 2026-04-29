@@ -27,9 +27,9 @@ const ManageTeachers = () => {
     maxStudents: 10,
   });
 
-  useEffect(() => {
-    dispatch(getAllUsers());
-  }, [dispatch]);
+  // useEffect(() => {
+  //   dispatch(getAllUsers());
+  // }, [dispatch]);
 
   const teachers = useMemo(() => {
     return (users || []).filter((u) => u.role?.toLowerCase() === "teacher");

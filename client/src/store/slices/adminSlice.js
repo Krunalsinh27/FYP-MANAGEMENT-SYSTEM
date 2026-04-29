@@ -103,7 +103,7 @@ const adminSlice = createSlice({
         );
       }
     })
-    .addCase(createStudent.rejected, (state) => {
+    .addCase(createStudent.rejected, (state, action) => {
       if(state.users) state.users = state.users.filter((u) => u._id !== action.payload);
     })
     .addCase(getAllUsers.fulfilled, (state, action) => {
@@ -119,7 +119,7 @@ const adminSlice = createSlice({
         );
       }
     })
-    .addCase(createTeacher.rejected, (state) => {
+    .addCase(createTeacher.rejected, (state, action) => {
       if(state.users) state.users = state.users.filter((u) => u._id !== action.payload);
     })
     .addCase(deleteStudent.fulfilled, (state, action) => {

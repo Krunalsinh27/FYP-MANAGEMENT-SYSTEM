@@ -7,20 +7,25 @@ import { X } from "lucide-react";
 const AddTeacher = () => {
   const dispatch = useDispatch();
 
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     name: "",
     email: "",
     department: "",
     password: "",
     expertise: "",
-    maxStudents: 1
-  });
+    maxStudents: 1,
+  };
+
+  const [formData, setFormData] = useState(initialFormData);
 
   const handleCreateTeacher = (e) => {
     e.preventDefault();
-    dispatch(createTeacher(formData));
-    setFormData({ name: "", email: "", department: "", password: "", expertise: "", maxStudents: 1});
-    dispatch(toggleTeacherModal()); 
+    dispatch(createTeacher({
+      ...formData,
+      maxStudents: Number(formData.maxStudents),
+    }));
+    setFormData(initialFormData);
+    dispatch(toggleTeacherModal());
   };
 
   return (
@@ -65,6 +70,7 @@ const AddTeacher = () => {
               </label>
 
               <select className="input-field w-full py-1 border-b border-slate-600 focus:outline-none" required value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })}>
+                <option value="">Select Department</option>
                 <option value="Computer Science">Computer Science</option>
                 <option value="Software Engineering">Software Engineering</option>
                 <option value="Information Technology">Information Technology</option>
@@ -84,6 +90,7 @@ const AddTeacher = () => {
                     </label>
 
                     <select className="input-field w-full py-1 border-b border-slate-600 focus:outline-none" required value={formData.expertise} onChange={(e) => setFormData({ ...formData, expertise: e.target.value })}>
+                      <option value="">Select Expertise</option>
                       <option value="Artificial Intelligence">Artificial Intelligence</option>
                       <option value="Machine Learning">Machine Learning</option>
                       <option value="Cybersecurity">Cybersecurity</option>
@@ -95,7 +102,7 @@ const AddTeacher = () => {
                       <option value="Database Systems">Database Systems</option>
                       <option value="Computer Networks">Computer Networks</option>
                       <option value="Operating Systems">Operating Systems</option>
-                      <option value="Human-Computr Interaction">Human-Computr Interaction</option>
+                      <option value="Human-Computer Interaction">Human-Computer Interaction</option>
                       <option value="Big Data Analytics">Big Data Analytics</option>
                       <option value="Blockchain Technology">Blockchain Technology</option>
                       <option value="Internet of Things (IoT)">Internet of Things (IoT)</option>
@@ -108,7 +115,7 @@ const AddTeacher = () => {
                     <label className="block text-sm font-medium text-slate-700 mb-1 ">
                       Max Students
                     </label>
-                    <input type="number" required max={10} min={1} value={formData.maxStudents} onChange={(e) => setFormData({ ...formData, maxStudents: e.target.value })} className="input-field w-full py-1 border-b border-slate-600 focus:outline-none" />
+                    <input type="number" required max={10} min={1} value={formData.maxStudents} onChange={(e) => setFormData({ ...formData, maxStudents: Number(e.target.value) })} className="input-field w-full py-1 border-b border-slate-600 focus:outline-none" />
                   </div>
 
             <div className="flex justify-end space-x-3 pt-4">
