@@ -42,7 +42,7 @@ const projectSchema = new mongoose.Schema({
             required: true,
         },
         uploadedAt: {
-            type: Data,
+            type: Date,
             default: Date.now,
         },
     }],
@@ -70,7 +70,7 @@ const projectSchema = new mongoose.Schema({
         },
     ],
     deadline: {
-        type: Date,
+        type: Date
     },
 },{
     timestamps: true,
