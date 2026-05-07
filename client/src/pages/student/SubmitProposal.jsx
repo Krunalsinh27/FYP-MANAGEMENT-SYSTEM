@@ -18,9 +18,10 @@ const SubmitProposal = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      dispatch(submitProjectProposal(formData));
-      setIsLoading(false); 
+      await dispatch(submitProjectProposal(formData));
     } catch (error) {
+      // no-op: error handling happens in the async thunk
+    } finally {
       setIsLoading(false);
     }
   };
@@ -42,7 +43,7 @@ const SubmitProposal = () => {
 
         <div>
           <label className="label">Project Description</label>
-          <textarea name="description" value={formData.description} onChange={handleChange} className="Provide a detailed description of your project..." required />
+          <textarea name="description" value={formData.description} onChange={handleChange} className="input min-h-[120px]" placeholder="Provide a detailed description of your project..." required />
         </div>
 
         <div className="flex justify-end space-x-4 pt-4 border-t border-slate-200">

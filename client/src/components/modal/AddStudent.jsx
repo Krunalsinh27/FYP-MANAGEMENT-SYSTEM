@@ -63,6 +63,7 @@ const AddStudent = () => {
               </label>
 
               <select className="input-field w-full py-1 border-b border-slate-600 focus:outline-none" required value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })}>
+                <option value="" disabled hidden>Select Department</option>
                 <option value="Computer Science">Computer Science</option>
                 <option value="Software Engineering">Software Engineering</option>
                 <option value="Information Technology">Information Technology</option>

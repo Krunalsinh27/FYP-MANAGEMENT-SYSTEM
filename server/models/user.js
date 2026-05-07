@@ -43,7 +43,9 @@ const userSchema = new mongoose.Schema(
         },
         maxStudents: {
             type: Number,
-            default: 10,
+            default: function() {
+                return this.role === "Teacher" || this.role === "Supervisor" ? 10 : undefined;
+            },
             min: [1, "Min students must be at least 1"],
         },
         assignedStudents: [{
