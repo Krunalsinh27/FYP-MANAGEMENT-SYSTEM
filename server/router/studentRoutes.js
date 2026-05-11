@@ -1,5 +1,5 @@
 import express from "express";
-import { getAvailableSupervisors, getStudentProject, submitProposal, uploadFiles } from "../controllers/studentController.js";
+import { getAvailableSupervisors, getStudentProject, getSupervisor, requestSupervisor, submitProposal, uploadFiles } from "../controllers/studentController.js";
 import {
     isAuthenticated,
     isAuthorized,
@@ -37,5 +37,20 @@ router.get(
     isAuthorized("Student"), 
     getAvailableSupervisors
 );
+
+router.get(
+    "/supervisor", 
+    isAuthenticated, 
+    isAuthorized("Student"), 
+    getSupervisor
+);
+
+router.post(
+    "/request-supervisor", 
+    isAuthenticated, 
+    isAuthorized("Student"), 
+    requestSupervisor
+);
+
 
 export default router;
