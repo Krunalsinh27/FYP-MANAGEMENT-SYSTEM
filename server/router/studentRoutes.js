@@ -1,5 +1,5 @@
 import express from "express";
-import { getAvailableSupervisors, getStudentProject, getSupervisor, requestSupervisor, submitProposal, uploadFiles } from "../controllers/studentController.js";
+import { getAvailableSupervisors, getDashboardState, getFeedback, getStudentProject, getSupervisor, requestSupervisor, submitProposal, uploadFiles } from "../controllers/studentController.js";
 import {
     isAuthenticated,
     isAuthorized,
@@ -50,6 +50,20 @@ router.post(
     isAuthenticated, 
     isAuthorized("Student"), 
     requestSupervisor
+);
+
+router.get(
+    "/feedback/:projectId",
+    isAuthenticated,
+    isAuthorized("student"),
+    getFeedback
+);
+
+router.get(
+    "/fetch-dashboard-stats",
+    isAuthenticated,
+    isAuthorized("student"),
+    getDashboardState
 );
 
 
