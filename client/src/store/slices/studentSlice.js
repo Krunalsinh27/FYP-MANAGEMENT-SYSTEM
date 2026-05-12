@@ -1,7 +1,7 @@
-import { createSlice, createAsyncThunk, isRejectedWithValue } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, /*{isRejectedWithValue}*/ } from "@reduxjs/toolkit";
 import { axiosInstance } from "../../lib/axios";
 import { toast } from "react-toastify";
-import { act } from "react";
+// import { act } from "react";
 
 export const submitProjectProposal = createAsyncThunk("student/submitProjectProposal", async (data, thunkAPI) => {
   try {
@@ -55,6 +55,24 @@ export const requestSupervisor = createAsyncThunk("student/requestSupervisor", a
   }
 });
 
+
+export const uploadFiles = createAsyncThunk("student/uploadFiles", async({projectId, files}, thunkAPI) => {
+  try {
+    const form = new FormData();
+    for(const file of files) form.append("files", file);
+    const res = await axiosInstance.post(`/student/upload-files/${projectId}`, form, {
+      headers: {
+        "Content-Type" : "multipart/form-data",
+      }
+    });
+    toast.success(res.data.message || "Files uploaded successfully");
+    return res.data.data.project || res.data;
+  } catch (error) {
+    toast.error(error.response.data.message || "Failed to upload files");
+    return thunkAPI.rejectWithValue(error.response.data.message);
+  }
+});
+
 const studentSlice = createSlice({
   name: "student",
   initialState: {
@@ -78,8 +96,12 @@ const studentSlice = createSlice({
     builder.addCase(getSupervisor.fulfilled, (state, action)=>{
       state.supervisor = action.payload?.supervisor || action.payload || null;
     });
-    builder.addCase(fetchAllSupervisor.fulfilled, (state, action)=>{
+    builder.addCase(fetchAllSupervisors.fulfilled, (state, action)=>{
       state.supervisors = action.payload?.supervisors || action.payload || [];
+    });
+    builder.addCase(uploadFiles.fulfilled, (state, action)=>{
+      const newFiles = action.payload?.project?.files || action.payload || [];
+      state.files = [...state.files, ...newFiles];
     });
   },
 });
