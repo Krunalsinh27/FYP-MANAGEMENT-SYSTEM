@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { /*{useEffect},*/ useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import AddStudent from "../../components/modal/AddStudent";
 import {
-  createStudent,
+  // createStudent,
   deleteStudent,
-  getAllUsers,
+  // getAllUsers,
   updateStudent,
 } from "../../store/slices/adminSlice";
 import { AlertTriangle, CheckCircle, Plus, TriangleAlert, Users, X } from "lucide-react";
@@ -42,7 +42,7 @@ const ManageStudents = () => {
       .filter((u) => u.role?.toLowerCase() === "student")
       .map((student) => {
         const studentProject = projects.find(
-          (p) => p.student?._id === student._id
+          (p) => p.student === student._id
         );
 
         return {
@@ -256,9 +256,7 @@ const ManageStudents = () => {
                               student.supervisor ? (
                                 <span className=
                                   "inline-flex items-center px-2 py-0.5 rounded-full text-green-800 bg-gray-100 text-xs font-medium">
-                                  {typeof student.supervisor === "object" ?
-                                    student.supervisor.name || "-"
-                                    : student.supervisor}
+                                  {users?.find((u) => u._id === student?.supervisor)?.name}
                                 </span>
                               ) : (
                                 <span className=

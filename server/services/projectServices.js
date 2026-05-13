@@ -36,3 +36,8 @@ export const addFilesToProject = async (projectId, files) => {
     await project.save();
     return project;
 };
+
+export const getAllProjects = async() => {
+    const projects = await Project.find();
+    return projects;
+};

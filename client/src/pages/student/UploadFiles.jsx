@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-// import { toast } from "react-toastify";
-import { fetchProject, uploadFiles } from "../../store/slices/studentSlice";
+import { toast } from "react-toastify";
+import { downloadFile, fetchProject, uploadFiles } from "../../store/slices/studentSlice";
 import { Archive, File, FileText, FileCode, FilePlus } from "lucide-react";
 
 const UploadFiles = () => {
@@ -48,6 +48,30 @@ const UploadFiles = () => {
     const color = extension === "pdf" ? "text-red-500" : ["doc", "docx"].includes(extension) ? "text-blue-500" : ["ppt", "pptx"].includes(extension) ? "text-orange-500" : "text-slate-500";
     return <Icon className={`w-8 h-8 ${color}`} />
   };
+
+  const handleDownloadFile = async (file) => {
+    if(!file?._id) return;
+    try {
+      const res = await dispatch(
+        downloadFile({ projectId: project._id, fileId: file._id })
+      );
+      if(res.type === "downloadfile/fulfilled") {
+        const { blob } = res.payload;
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", file.originalName || "download");
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } else {
+        toast.error(res.payload || "Failed to download file");
+      }
+    } catch (error) {
+      toast.error("Failed to download file");
+    }
+  }
 
   return (
     <>
@@ -120,7 +144,7 @@ const UploadFiles = () => {
                             <p className="font-medium text-slate-800">{file.name}</p>
                             <div className="flex items-center space-x-4 text-sm text-slate-600">
                               <span>
-                                {(file.size / (1024 * 1-24)).toFixed(1)} MB
+                                {(file.size / (1024 * 1024)).toFixed(1)} MB
                               </span>
                             </div>
                           </div>
@@ -142,7 +166,7 @@ const UploadFiles = () => {
             </div>
 
             {
-              (files || [].length === 0 ? (
+              (files?.length === 0 ? (
                 <div className="text-center py-4">
                   <FilePlus className="w-16 h-16 text-slate-300 mx-auto mb-4"/>
                   <p className="text-slate-500">No files uploaded yet</p>
@@ -161,8 +185,8 @@ const UploadFiles = () => {
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <button className="btn-outline btn-small">Download</button>
-                      </div>
+                        <button className="btn-outline btn-small" onClick={() => handleDownloadFile(file)}>Download</button>
+                      </div> 
                     </div>
                   ))}
                 </div>

@@ -42,7 +42,12 @@ const SupervisorPage = () => {
   const submitRequest = () => {
     if(!selectedSupervisor) return;
     const message = requestMessage?.trim() || `${authUser.name || "Student"} has request ${selectedSupervisor.name} to be their supervisor.`;
-    dispatch(requestSupervisor({teacherId: selectedSupervisor._id, message}));
+    dispatch(requestSupervisor({teacherId: selectedSupervisor._id, message})).then((res)=>{
+      if(res.type === "student/requestSupervisor/fulfilled"){
+        setShowRequestModal(false);   
+      }
+    });
+    
   };
 
   return <>
@@ -198,7 +203,7 @@ const SupervisorPage = () => {
         {/* REQUEST MODAL */}
         {
           showRequestModal && selectedSupervisor && (
-            <div className="modal-ovelay">
+            <div className="modal-overlay">
               <div className="modal-content">
                 <div className="p-6">
                   <div className="flex item-center justify-between mb-4">

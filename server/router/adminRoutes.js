@@ -1,5 +1,5 @@
 import express from "express";
-import { createStudent, createTeacher, deleteStudent, deleteTeacher, getAllUsers, updateStudent, updateTeacher } from "../controllers/adminController.js";
+import { createStudent, createTeacher, deleteStudent, deleteTeacher, getAllUsers, getAllProjects, updateStudent, updateTeacher } from "../controllers/adminController.js";
 import multer from "multer";
 import { 
     isAuthenticated, 
@@ -48,6 +48,13 @@ router.delete(
     isAuthenticated, 
     isAuthorized("Admin"), 
     deleteTeacher
+);
+
+router.get(
+    "/projects", 
+    isAuthenticated, 
+    isAuthorized("Admin"), 
+    getAllProjects
 );
 
 router.get(

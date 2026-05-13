@@ -1,5 +1,5 @@
 import express from "express";
-import { getAvailableSupervisors, getDashboardState, getFeedback, getStudentProject, getSupervisor, requestSupervisor, submitProposal, uploadFiles } from "../controllers/studentController.js";
+import { downloadFile, getAvailableSupervisors, getDashboardState, getFeedback, getStudentProject, getSupervisor, requestSupervisor, submitProposal, uploadFiles } from "../controllers/studentController.js";
 import {
     isAuthenticated,
     isAuthorized,
@@ -66,5 +66,11 @@ router.get(
     getDashboardState
 );
 
+router.get(
+    "/download/:projectId/:fileId",
+    isAuthenticated,
+    isAuthorized("student"),
+    downloadFile
+);
 
 export default router;

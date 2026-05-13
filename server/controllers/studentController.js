@@ -7,11 +7,13 @@ import * as requestService from "../services/requestServices.js";
 import * as notificationService from "../services/notificationServices.js";
 import { Project } from "../models/project.js";
 import { Notification } from "../models/notification.js";
+import * as fileServices from "../services/fileServices.js";
+
 
 export const getStudentProject = asyncHandler(async (req, res, next) =>{
     const studentId = req.user._id;
 
-    const project = await projectService.getProjectByStudentId(studentId);
+    const project = await projectServices.getProjectByStudentId(studentId);
 
     if(!project){
         return res.status(200).json({
@@ -30,10 +32,14 @@ export const submitProposal = asyncHandler(async (req, res, next) => {
     const {title, description} = req.body;
     const studentId = req.user._id;
 
-    const existingProject = await projectService.getProjectByStudentId(studentId);
+    const existingProject = await projectServices.getProjectByStudentId(studentId);
 
     if (existingProject && existingProject.status !== "rejected") {
         return next(new ErrorHandler("You already have an active project. You can only submit a new proposal if the previous one was rejected.", 400));
+    }
+
+    if(existingProject && existingProject.status === "rejected"){
+        await Project.findByIdAndDelete(existingProject._id);
     }
 
     const projectData = {
@@ -42,7 +48,7 @@ export const submitProposal = asyncHandler(async (req, res, next) => {
         description,
     };
 
-    const project = await projectService.createProject(projectData);
+    const project = await projectServices.createProject(projectData);
 
     await User.findByIdAndUpdate(studentId, { project: project._id });
 
@@ -56,15 +62,15 @@ export const submitProposal = asyncHandler(async (req, res, next) => {
 export const uploadFiles = asyncHandler(async (req, res, next) => {
     const {projectId} = req.params;
     const studentId = req.user._id;
-    const project = await projectService.getProjectById(projectId);
+    const project = await projectServices.getProjectById(projectId);
 
-    if(!project || project.student.toString() !== studentId.toString()){
+    if(!project || project.student._id.toString() !== studentId.toString()){
         return next(new ErrorHandler("Not authorized to upload files for this project", 403));
     }
     if(!req.files || req.files.length === 0){
         return next(new ErrorHandler("No files uploaded", 400));
     }
-    const updatedProject = await projectService.addFilesToProject(projectId, req.files);
+    const updatedProject = await projectServices.addFilesToProject(projectId, req.files);
     
     res.status(200).json({
         success: true,
@@ -178,7 +184,7 @@ export const getFeedback = asyncHandler(async(req, res, next) => {
     const { projectId } = req.params;
     const studentId = req.user._id;
 
-    const project = await projectService.getProjectById(projectId);
+    const project = await projectServices.getProjectById(projectId);
 
     if(!project || project.student.toString() !== studentId.toString()) {
         return next(new ErrorHandler("Not authorized to view feedback for this project", 403));
@@ -198,11 +204,11 @@ export const downloadFile = asyncHandler(async(req, res, next) => {
 
     const project = await projectServices.getProjectById(projectId);
     if(!project) return next(new ErrorHandler("Project not found", 404));
-    if(project.student.toString() !== studentId.toString()){
+    if(project.student.id.toString() !== studentId.toString()){
         return next(new ErrorHandler("Not authorized to download file", 403))
     }
     const file = project.files.id(fileId);
     if(!file) return next(new ErrorHandler("File not found", 404));
 
-    streamDownload(file.fileUrl, res, file.originalName);
-})
+    fileServices.streamDownload(file.fileUrl, res, file.originalName);
+});
