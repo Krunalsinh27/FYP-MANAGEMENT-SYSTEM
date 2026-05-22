@@ -153,7 +153,7 @@ export const getDashboardState = asyncHandler(async(req, res, next) => {
 
     const now = new Date();
     const upcomingDeadlines = await Project.find({
-        stuedent: stuedentId, 
+        student: studentId,
         deadline: {$gte: now},
     })
         .select("title description")
@@ -192,9 +192,9 @@ export const getFeedback = asyncHandler(async(req, res, next) => {
 
     const sortedFeedback = project.feedback.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    res.status.json({
-        success:true,
-        data: { feedback: sortedFeedback},
+    res.status(200).json({
+        success: true,
+        data: { feedback: sortedFeedback },
     });
 });
 

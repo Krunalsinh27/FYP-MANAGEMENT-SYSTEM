@@ -85,22 +85,12 @@ const App = () => {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-        {/* Admin Routes */}
-        <Route path="/admin" element={
-          <ProtectedRoute allowedRoles={"Admin"}>
-            <DashboardLayout userRole={"Admin"}/>
+        {/* Student Routes */}
+        <Route path="/student" element={
+          <ProtectedRoute allowedRoles={["Student"]}>
+            <DashboardLayout userRole="Student" />
           </ProtectedRoute>
         }>
-          <Route index element={<AdminDashboard />} />
-          <Route path="students" element={<ManageStudents />}/>
-          <Route path="teachers" element={<ManageTeachers />}/>
-          <Route path="assign-supervisor" element={<AssignSupervisor />}/>
-          <Route path="deadlines" element={<DeadlinesPage />}/>
-          <Route path="projects" element={<ProjectsPage />}/>
-        </Route>
-
-        {/* Student Routes */}
-        <Route path="/student" element={<DashboardLayout userRole="Student" />}>
           <Route index element={<StudentDashboard />} />
           <Route path="submit-proposal" element={<SubmitProposal />} />
           <Route path="upload-files" element={<UploadFiles />} />
@@ -110,7 +100,11 @@ const App = () => {
         </Route>
 
         {/* Teacher Routes */}
-        <Route path="/teacher" element={<DashboardLayout userRole="Teacher" />}>
+        <Route path="/teacher" element={
+          <ProtectedRoute allowedRoles={["Teacher"]}>
+            <DashboardLayout userRole="Teacher" />
+          </ProtectedRoute>
+        }>
           <Route index element={<TeacherDashboard />} />
           <Route path="pending-requests" element={<PendingRequests />} />
           <Route path="assigned-students" element={<AssignedStudents />} />
@@ -118,7 +112,7 @@ const App = () => {
         </Route>
 
         {/* Admin Routes */}
-        <Route path="/admin" element={<DashboardLayout userRole="Admin" />}>
+        <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]}><DashboardLayout userRole="Admin"/></ProtectedRoute>}>
           <Route index element={<AdminDashboard />} />
           <Route path="students" element={<ManageStudents />} />
           <Route path="teachers" element={<ManageTeachers />} />
