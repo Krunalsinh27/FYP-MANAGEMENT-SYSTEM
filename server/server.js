@@ -4,9 +4,7 @@ import cors from "cors";
 
 app.use(
   cors({
-    origin: [
-      "https://fyp-management-system-blue.vercel.app",
-    ],
+    origin: true,
     credentials: true,
   })
 );
