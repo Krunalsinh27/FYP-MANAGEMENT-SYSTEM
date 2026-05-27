@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchDashboardStats } from "../../store/slices/studentSlice";
 import { Link } from "react-router-dom";
-import { MessageCircle } from "lucide-react";
+import { Bell, MessageCircle, MessageCircleWarning } from "lucide-react";
 
 const StudentDashboard = () => {
 
@@ -29,22 +29,22 @@ const StudentDashboard = () => {
     });
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "upcoming":
-        return "badge-pending";
-        break;
-      case "completed":
-        return "badge-approved";
-        break;
-      case "overdue":
-        return "badge-rejected";
-        break;
+  // const getStatusColor = (status) => {
+  //   switch (status) {
+  //     case "upcoming":
+  //       return "badge-pending";
+  //       break;
+  //     case "completed":
+  //       return "badge-approved";
+  //       break;
+  //     case "overdue":
+  //       return "badge-rejected";
+  //       break;
 
-      default:
-        return "badge-pending";
-    }
-  };
+  //     default:
+  //       return "badge-pending";
+  //   }
+  // };
 
   return <>
     <div className="space-y-6">
@@ -169,7 +169,7 @@ const StudentDashboard = () => {
               </div>
             ) : (
               <div className="text-center py-8">
-                <MessageCircle className="w-10 h-10 text-slate-300 mx-auto mb-3"/>
+                <MessageCircle className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                 <p className="text-slate-500 text-sm">No Feedback available yet.</p>
               </div>
             )}
@@ -180,10 +180,62 @@ const StudentDashboard = () => {
       {/* UPCOMING DEADLINES & NOTIFICATIONS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card">
-          <div></div>
+          <div className="card-header">
+            <h2 className="card-title">Upcoming Deadline</h2>
+          </div>
+          {
+            upcomingDeadlines && upcomingDeadlines.length > 0 ? (<div className="space-y-3">
+              {upcomingDeadlines.map((d, i) => {
+                return (
+                  <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-slate-800">{d.title}</p>
+                      <p className="font-sm text-slate-600">{formatDate(d.deadline)}</p>
+                    </div>
+                    <div className={`badge badge-pending`}>upcoming</div>
+                  </div>
+                )
+              })}
+            </div>) : (
+              <div className="text-center py-8">
+                <MessageCircleWarning className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-500 text-sm">No upcoming deadlines yet.</p>
+              </div>
+            )
+          }
+        </div>
+
+        {/* RECENT NOTIFICATIONS */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">
+              Recent Notifications
+            </h2>
+            {
+              topNotifications && topNotifications.length > 0 ? (
+                <div className="space-y-3">
+                  {
+                    topNotifications.map((n, i) => {
+                      return (
+                        <div key={i} className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                          <p className="font-medium text-slate-800">{n.message}</p>
+                          <p className="text-xs text-slate-500 mt-1">{formatDate(n.createAt)}</p>
+                        </div>
+                      )
+                    })
+                  }
+                </div>
+              ): (
+                <div className = "text-center py-8">
+                <Bell className = "w-10 h-10 text-slate-300 mx-auto mb-3"/>
+            <p className="text-slate-500 text-sm">No notification yet.</p>
+          </div>
+          )
+            }
         </div>
       </div>
     </div>
+  </div >
 
   </>;
 };
