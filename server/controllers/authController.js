@@ -9,11 +9,11 @@ import crypto from "crypto";
 // REGISTER USER
 export const registerUser = asyncHandler(async (req, res, next) => {
     const { name, email, password, role } = req.body;
-    if(!name || !email || !password || !role){
+    if (!name || !email || !password || !role) {
         return next(new ErrorHandler("Please enter all required fields.", 400));
     }
     let user = await User.findOne({ email });
-    if(user){
+    if (user) {
         return next(new ErrorHandler("User already exists.", 400));
     }
     user = new User({ name, email, password, role });
@@ -23,15 +23,21 @@ export const registerUser = asyncHandler(async (req, res, next) => {
 
 export const loginUser = asyncHandler(async (req, res, next) => {
     const { email, password, role } = req.body;
-    if(!email || !password || !role){
+    if (!email || !password || !role) {
         return next(new ErrorHandler("Please enter all required fields.", 400));
     }
-    const user = await User.findOne({ email, role }).select("+password");
-    if(!user){
+    const user = await User.findOne({ email }).select("+password");
+    if (!user) {
         return next(new ErrorHandler("Invalid email, password or role.", 401));
     }
+    if (user.role.toLowerCase() !== role.toLowerCase()) {
+        return res.status(401).json({
+            success: false,
+            message: "Invalid role"
+        });
+    }
     const isPasswordMatched = await user.comparePassword(password);
-    if(!isPasswordMatched){
+    if (!isPasswordMatched) {
         return next(new ErrorHandler("Invalid email, password or role.", 401));
     }
     generateToken(user, 200, "logged in successfully.", res);
@@ -56,10 +62,10 @@ export const getUser = asyncHandler(async (req, res, next) => {
 });
 
 export const forgotPassword = asyncHandler(async (req, res, next) => {
-    
+
     const user = await User.findOne({ email: req.body.email });
 
-    if(!user){
+    if (!user) {
         return next(new ErrorHandler("User not found with this email.", 404));
     }
 
@@ -90,7 +96,7 @@ export const forgotPassword = asyncHandler(async (req, res, next) => {
 });
 
 export const resetPassword = asyncHandler(async (req, res, next) => {
-    const {token} = req.params;
+    const { token } = req.params;
     const resetPasswordToken = crypto.createHash("sha256").update(token).digest("hex");
 
     const user = await User.findOne({
@@ -98,14 +104,14 @@ export const resetPassword = asyncHandler(async (req, res, next) => {
         resetPasswordExpire: { $gt: Date.now() },
     });
 
-    
-    if(!user){
+
+    if (!user) {
         return next(new ErrorHandler("Invalid or expired reset password token.", 400));
     }
-    if(!req.body.password || !req.body.confirmPassword){
+    if (!req.body.password || !req.body.confirmPassword) {
         return next(new ErrorHandler("Please provide all required fields.", 400));
     }
-    if(req.body.password !== req.body.confirmPassword){
+    if (req.body.password !== req.body.confirmPassword) {
         return next(new ErrorHandler("Password and confirm password do not match.", 400));
     }
 
