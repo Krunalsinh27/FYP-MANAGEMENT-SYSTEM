@@ -12,7 +12,7 @@ export const getNotifications = createAsyncThunk("getNotifications", async (_, t
   }
 });
 
-export const markAsRead = createAsyncThunk("getNotifications", async (id, thunkAPI) => {
+export const markAsRead = createAsyncThunk("markAsRead", async (id, thunkAPI) => {
   try {
     const res = await axiosInstance.put(`/notification/${id}/read`);
     return id;
@@ -21,7 +21,7 @@ export const markAsRead = createAsyncThunk("getNotifications", async (id, thunkA
   }
 });
 
-export const markAllAsRead = createAsyncThunk("getNotifications", async (_, thunkAPI) => {
+export const markAllAsRead = createAsyncThunk("markAllAsRead", async (_, thunkAPI) => {
   try {
     const res = await axiosInstance.put(`/notification/read-all`);
     return true;
@@ -29,7 +29,7 @@ export const markAllAsRead = createAsyncThunk("getNotifications", async (_, thun
     return thunkAPI.rejectWithValue(error.response.data.message);
   }
  });
-export const deleteNotification = createAsyncThunk("getNotifications", async (id, thunkAPI) => { 
+export const deleteNotification = createAsyncThunk("deleteNotification", async (id, thunkAPI) => { 
   try {
     const res = await axiosInstance.delete(`/notification/${id}/delete`);
     return id;
@@ -59,25 +59,26 @@ const notificationSlice = createSlice({
       state.thisWeekNotifications = action.payload?.thisWeekNotifications || 0;
     });
     builder.addCase(markAsRead.fulfilled, (state, action) => {
-      state.list = state.list.map((n)=> n._id === action.payload ? {...n. isRead: true}: n);
+      state.list = state.list.map((n)=> n._id === action.payload ? {...n, isRead: true}: n);
       state.unreadCount = Math.max(0, state.unreadCount - 1);
       state.readCount = Math.max(0, state.readCount + 1);
     })
     builder.addCase(markAllAsRead.fulfilled, (state, action) => {
       state.list = state.list.map((n) => ({...n, isRead: true}));
+      state.unreadCount = 0;
+      state.readCount = state.list.length;
     });
-    builder.deleteNotification(deleteNotification.fulfilled, (state, action) => {
+    builder.addCase(deleteNotification.fulfilled, (state, action) => {
       const removed = state.list.find((n)=> n._id === action.payload);
       state.list = state.list.filter(n=> n._id !== action.payload);
 
       if(removed){
         if(!removed.isRead){
           state.unreadCount = Math.max(0, state.unreadCount - 1);
+        } else {
+          state.readCount = Math.max(0, state.readCount - 1);
         }
-        if(removed.isRead){
-          state.unreadCount = Math.max(0, state.readCount - 1);
-        }
-        if(!removed.priority === "high"){
+        if(removed.priority === "high"){
           state.highPriorityMessages = Math.max(0, state.highPriorityMessages - 1);
         }
       }

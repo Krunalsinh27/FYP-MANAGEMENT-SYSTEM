@@ -61,11 +61,11 @@ const LoginPage = () => {
       return;
     }
 
-    const data = new FormData();
-
-    data.append("email", formData.email);
-    data.append("password", formData.password);
-    data.append("role", formData.role);
+    const data = {
+      email: formData.email,
+      password: formData.password,
+      role: formData.role,
+    };
 
     dispatch(login(data));
   };

@@ -1,8 +1,107 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { } from "../../store/slices/studentSlice";
+import { AlertTriangle, BadgeCheck, MessageCircle } from "lucide-react";
 
 const FeedbackPage = () => {
-  return <></>;
+
+  const dispatch = useDispatch();
+  const { project, feedback } = useSelector(state => state.student)
+
+  useEffect(() => {
+    dispatch(fetchProject());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (project?._id) {
+      dispatch(getFeedback(project._id))
+    }
+  }, [dispatch, project]);
+
+  // const getStatusIcon = (status)=> {
+  //   return (
+  //     <div className={`w-3 h-3 rounded-full ${status === "unread" ? "bg-blue-500" : "bg-slate-300"}`} />
+  //   );
+  // };
+
+  const getFeedBackIcon = (type) => {
+    if (type === "positive") {
+      return <BadgeCheck className="w-6 h-6 text-green-500" />
+    }
+    if (type === "negative") {
+      return <AlertTriangle className="w-6 h-6 text-red-500" />
+    }
+    return <MessageCircle className="w-6 h-6 text-blue-500" />
+  };
+
+  const feedbackStats = [
+    {
+      type: "general",
+      title: "Total Feedback",
+      bg: "bg-blue-50",
+      iconBg: "bg-blue-100",
+      textColor: "text-blue-800",
+      valueColor: "text-blue-900",
+      getCount: (feedback) => feedback?.length || 0,
+    },
+    {
+      type: "positive",
+      title: "Positive",
+      bg: "bg-green-50",
+      iconBg: "bg-green-100",
+      textColor: "text-green-800",
+      valueColor: "text-green-900",
+      getCount: (feedback) => feedback.filter((f) => f.type === "positive").length,
+    },
+    {
+      type: "negetive",
+      title: "Needs Revision",
+      bg: "bg-yellow-50",
+      iconBg: "bg-yellow-100",
+      textColor: "text-yellow-800",
+      valueColor: "text-yellow-900",
+      getCount: (feedback) => feedback.filter((f) => f.type === "negetive").length,
+    },
+  ]
+
+  return <>
+    <div className="space-y-6">
+      <div className="card">
+        <div className="card-header">
+          <h1 className="card-title">Supervisor Feedback</h1>
+          <p className="card-subtitle">
+            View feedback and comments from your supervisor
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {feedbackStats.map((item, i) => {
+            return (
+              <div key={i} className={`${item.bg} rounded-lg p-4`}>
+                <div className="flex items-center">
+                  <div className={`p-2 ${item.iconBg} rounded-lg`}>
+                    {getFeedBackIcon(item.type)}
+                  </div>
+
+                  <div className="ml-3">
+                    <p className={`text-sm font-medium ${item.titleColor}`}>{item.title}</p>
+                    <p className={`text-sm font-medium ${item.valueColor}`}>{item.value}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        }
+      </div>
+    </div>
+
+
+
+
+
+
+  </>;
 };
 
 export default FeedbackPage;
