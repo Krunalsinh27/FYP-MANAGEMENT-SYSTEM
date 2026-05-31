@@ -90,7 +90,7 @@ export const getAvailableSupervisors = asyncHandler(async (req, res, next) => {
 
 export const getSupervisor = asyncHandler(async (req, res, next) => {
     const studentId = req.user._id;
-    const student = await User.findById(studentId).populate("supervisor", "name email department experties");
+    const student = await User.findById(studentId).populate("supervisor", "name email department expertise");
 
     if(!student.supervisor){
         return res.status(200).json({
@@ -131,7 +131,7 @@ export const requestSupervisor = asyncHandler(async(req, res, next) => {
 
     const request = await requestService.createRequest(requestData);
 
-    await notificationService.notifyUser(
+    await notificationServices.notifyUser(
         teacherId,
         `${student.name} has request ${supervisor.name} to be their supervisor.`,
         "request",

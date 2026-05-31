@@ -18,11 +18,28 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-app.use(cors({
-    origin: [process.env.FRONTEND_URL],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+const allowedOrigins = [process.env.FRONTEND_URL].filter(Boolean);
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true); // allow non-browser requests like curl
+        // allow configured frontend origin
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        // allow any localhost or 127.0.0.1 origin on any port for development
+        try {
+            const url = new URL(origin);
+            if ((url.hostname === 'localhost' || url.hostname === '127.0.0.1')) return callback(null, true);
+        } catch (err) {
+            // ignore parse errors
+        }
+        return callback(new Error('CORS policy: Origin not allowed'));
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
-}));
+    allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
 
 const uploadsDir = path.join(__dirname, "uploads");
 const tempDir = path.join(__dirname, "temp");

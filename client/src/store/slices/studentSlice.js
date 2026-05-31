@@ -85,7 +85,7 @@ export const fetchDashboardStats = createAsyncThunk("fetchDashboardStats", async
 
 export const getFeedback = createAsyncThunk("getFeedback", async (projectId, thunkAPI) => {
   try {
-    const res = await axiosInstance.get(`/student/feedback/:${projectId}`);
+    const res = await axiosInstance.get(`/student/feedback/${projectId}`);
     return res.data.data?.feedback || res.data.data || res.data;
   } catch (error) {
     toast.error(error.response.data.message || "Failed to fetch feedback");

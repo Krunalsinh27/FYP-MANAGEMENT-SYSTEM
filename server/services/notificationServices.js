@@ -36,7 +36,7 @@ export const markAllAsRead = async (userId) => {
     );
 };
 
-export const deleteNotification = async (userId) => {
+export const deleteNotification = async (notificationId, userId) => {
     return await Notification.findOneAndDelete({
         _id: notificationId,
         user: userId,

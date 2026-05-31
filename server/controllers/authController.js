@@ -44,9 +44,13 @@ export const loginUser = asyncHandler(async (req, res, next) => {
 });
 
 export const logout = asyncHandler(async (req, res, next) => {
+    const isProd = process.env.NODE_ENV === 'production';
     res.status(200).cookie("token", "", {
         expires: new Date(Date.now()),
         httpOnly: true,
+        sameSite: isProd ? 'none' : 'lax',
+        secure: isProd,
+        path: '/',
     }).json({
         success: true,
         message: "Logged out successfully.",

@@ -16,6 +16,13 @@ const SupervisorPage = () => {
     dispatch(fetchProject());
     dispatch(getSupervisor());
     dispatch(fetchAllSupervisors());
+
+    // Poll for project status updates every 5 seconds
+    // const interval = setInterval(() => {
+    //   dispatch(fetchProject());
+    // }, 5000);
+
+    // return () => clearInterval(interval);
   }, [dispatch]);
 
 
@@ -52,6 +59,7 @@ const SupervisorPage = () => {
 
   return <>
     <div className="space-y-6">
+      
       {/* CURRENT SUPERVISOR */}
       <div className="card">
         <div className="card-header">
@@ -92,7 +100,7 @@ const SupervisorPage = () => {
           )}
       </div>
 
-      {/* PROJECT DETAILS _ ONLY SHOW IF PROJECT EXISTS */}
+      {/* PROJECT DETAILS  ONLY SHOW IF PROJECT EXISTS */}
       {hasProject && (
         <div className="card">
           <div className="card-header">

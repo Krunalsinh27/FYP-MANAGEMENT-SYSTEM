@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { } from "../../store/slices/studentSlice";
+import { getFeedback, fetchProject } from "../../store/slices/studentSlice";
 import { AlertTriangle, BadgeCheck, MessageCircle } from "lucide-react";
 
 const FeedbackPage = () => {
