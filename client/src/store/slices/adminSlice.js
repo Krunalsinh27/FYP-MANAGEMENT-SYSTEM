@@ -89,6 +89,16 @@ export const getAllProjects = createAsyncThunk("getAllProjects", async(_, thunkA
   }
 });
 
+export const getDashboardStats = createAsyncThunk("getDashboardStats", async(_, thunkApi) => {
+  try {
+    const res = await axiosInstance.get(`/admin/fetch-dashboard-stats`);
+    return res.data.data.stats;
+  } catch (error) {
+    toast.error(error.response?.data?.message || "Failed to fetch dashboard stats");
+    return thunkApi.rejectWithValue(error.response?.data?.message);
+  }
+});
+
 const adminSlice = createSlice({
   name: "admin",
   initialState: {
@@ -140,7 +150,10 @@ const adminSlice = createSlice({
     })
     .addCase(deleteTeacher.fulfilled, (state, action) => {
       if(state.users) state.users = state.users.filter((u) => u._id !== action.payload);
-    });
+    })
+    .addCase(getDashboardStats.fulfilled, (state, action) => {
+      state.stats = action.payload;
+    })
   },
 });
 

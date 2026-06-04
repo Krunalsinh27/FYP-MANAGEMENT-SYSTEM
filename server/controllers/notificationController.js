@@ -4,7 +4,7 @@ import ErrorHandler from "../middlewares/error.js";
 import * as notificationServices from "../services/notificationServices.js";
 
 export const getNotifications = asyncHandler(async (req, res, next) => {
-    const userId = res.user._id;
+    const userId = req.user._id;
     const role = req.user.role;
 
     let query = {};

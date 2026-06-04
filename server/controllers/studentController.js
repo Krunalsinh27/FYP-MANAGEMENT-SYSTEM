@@ -187,7 +187,15 @@ export const getFeedback = asyncHandler(async(req, res, next) => {
     const project = await projectServices.getProjectById(projectId);
 
     if(!project || project.student.toString() !== studentId.toString()) {
-        return next(new ErrorHandler("Not authorized to view feedback for this project", 403));
+        return next(new ErrorHandler("Not authorized to view feedback for this project", 403)).map((f)=> ({
+            _id: f._id,
+            title: f.title,
+            message: f.message,
+            type: f.type,
+            createdAt: f.createdAt,
+            supervisorName: f.supervisorId?.name,
+            supervisorEmail: f.supervisorId?.email,
+        }));
     }
 
     const sortedFeedback = project.feedback.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));

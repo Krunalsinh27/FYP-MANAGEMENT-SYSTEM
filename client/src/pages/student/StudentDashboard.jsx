@@ -48,6 +48,7 @@ const StudentDashboard = () => {
 
   return <>
     <div className="space-y-6">
+      {/* HEADER */}
       <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
         <h1 className="text-2xl font-bold mb-2">Welcome back, {authUser?.name || "Student"}</h1>
         <p className="text-blue-100">Here's your project overview and recent updates.</p>

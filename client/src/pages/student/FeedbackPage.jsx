@@ -13,7 +13,7 @@ const FeedbackPage = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (project?._id) {
+    if (project?._id) { 
       dispatch(getFeedback(project._id))
     }
   }, [dispatch, project]);
@@ -66,6 +66,8 @@ const FeedbackPage = () => {
 
   return <>
     <div className="space-y-6">
+
+      {/* FEEDBACK HEADER */}
       <div className="card">
         <div className="card-header">
           <h1 className="card-title">Supervisor Feedback</h1>
@@ -75,6 +77,7 @@ const FeedbackPage = () => {
         </div>
       </div>
 
+      {/* FEEDBACK STATS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {feedbackStats.map((item, i) => {
             return (
@@ -94,6 +97,43 @@ const FeedbackPage = () => {
           })
         }
       </div>
+
+
+        {/* FEEDBACK LIST */}
+        <div className="space-y-4">
+          {
+            feedback && feedback.length > 0 ? 
+              feedback.map((f, i) => {
+                return (
+                  <div key={i} className="border border-slate-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-2">
+                          {getFeedBackIcon(f.type)}
+                          <h3 className="font-medium text-slate-800">{f.title || "Feedback"}</h3>
+                        </div>
+                      </div>
+
+                      <div className = "text-right">
+                        <p className="text-sm border-slate-600">
+                          {new Date(f.createdAt).toLocaleDateString()}
+                        </p>
+                        <p>{f.supervisorName || "Supervisor"}</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 rounded-lg mb-3">
+                      <p className="text-slate-700 leading-relaxed">{f.message}</p>
+                    </div>
+                  </div>
+                );
+              })
+              : <div className="text-center py-8">
+                <MessageCircle className="w-16 h-16 text-slate-300 mx-auto mb-4"/>
+              <p className="text-slate-500">No feedback received yet</p>
+              </div>}
+        </div>
+
     </div>
 
 

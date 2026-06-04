@@ -1,5 +1,27 @@
 import mongoose from "mongoose";
 
+const feedbackSchema = new mongoose.Schema({
+        supervisorId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
+        type: {
+            type: String,
+            enum: ["positive", "negative", "general"],
+            default: "general",
+        },
+        title: {
+            type: String,
+            required: true,
+        },
+        message: {
+            type: String,
+            required: true,
+            maxlength: [1000, "Feedback message cannot be more than 2000 characters"],
+        },
+    },{timestamps: true})
+
 const projectSchema = new mongoose.Schema({
     student: {
         type: mongoose.Schema.Types.ObjectId,
@@ -28,7 +50,7 @@ const projectSchema = new mongoose.Schema({
         default: "pending",
         enum: ["pending", "approved", "rejected", "completed"],
     },
-    files:[{
+    files: [{
         fileType: {
             type: String,
             required: true,
@@ -46,39 +68,17 @@ const projectSchema = new mongoose.Schema({
             default: Date.now,
         },
     }],
-    feedback: [
-        {
-            supervisorId: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "User",
-                required: true,
-            },
-            type: {
-                type: String,
-                enum: ["positive", "negative", "general"],
-                default: "general",
-            },
-            title: {
-                type: String,
-                required: true,
-            },
-            message: {
-                type: String,
-                required: true,
-                maxlength: [1000, "Feedback message cannot be more than 2000 characters"],
-            },
-        },
-    ],
+    feedback: [feedbackSchema],
     deadline: {
-        type: Date
+        type: Date,
     },
-},{
+}, {
     timestamps: true,
 });
 
 //Indexing for better query performance
-projectSchema.index({student: 1});
-projectSchema.index({supervisor: 1});
-projectSchema.index({status: 1});
+projectSchema.index({ student: 1 });
+projectSchema.index({ supervisor: 1 });
+projectSchema.index({ status: 1 });
 
 export const Project = mongoose.models.Project || mongoose.model("Project", projectSchema);
