@@ -23,8 +23,8 @@ const AdminDashboard = () => {
 
   const { isCreateStudentModalOpen, isCreateTeacherModalOpen } = useSelector((state) => state.popup);
 
-  const { stats } = useSelector((state) => state.admin);
-  const { projects } = useSelector((state) => state.project);
+  const { stats, projects } = useSelector((state) => state.admin);
+  // const {  } = useSelector((state) => state.project);
   const { notifications } = useSelector((state) => state.notification.list);
 
   const dispatch = useDispatch();
@@ -52,6 +52,7 @@ const AdminDashboard = () => {
     return (projects || []).flatMap((p) =>
       (p.files || []).map((f) => ({
         projectId: p._id,
+        fileId: f._id,
         originalName: f.originalName,
         uploadedAt: f.uploadedAt,
         projectTitle: p.title,
@@ -67,19 +68,19 @@ const AdminDashboard = () => {
   );
 
   const handleDownload = async (projectId, fileId, name) => {
-    const res = await dispatch(downloadProjectFile({ projectId, fileId })).then(
-      (res) => {
-        const { blob } = res.payload;
-        const url = window.URL.createObjectURL(new Blob([blob]));
-        const link = document.createElement("a");
-        link.href = url;
-        link.setAttribute("download", file.name || "download");
-        document.body.appendChild(link);
-        link.click();
-        link.parentNode.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      }
-    );
+    try {
+      const { blob } = await dispatch(downloadProjectFile({ projectId, fileId })).unwrap();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", name || "download");
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error(error || "Failed to download file");
+    }
   };
 
   const supervisorsBucket = useMemo(() => {
@@ -364,16 +365,18 @@ const AdminDashboard = () => {
                             </div>
                           </div>
 
-                          <button className="btn-outline btn-small" onClick={()=> handleDownload(f.projectId, f,fileId, f.originalName)}>Download</button>
+                          <button className="btn-outline btn-small" onClick={()=> handleDownload(f.projectId, f.fileId, f.originalName)}>Download</button>
                         </div>
                       )
                     })}
                   </div>
-                )
-              }
+                )}
             </div>
           </div>
         )}
+
+        {isCreateStudentModalOpen && <AddStudent/>}
+        {isCreateTeacherModalOpen && <AddTeacher />}
     </div>
   </>;
 };
