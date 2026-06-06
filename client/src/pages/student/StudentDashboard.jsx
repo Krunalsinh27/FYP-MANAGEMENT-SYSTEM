@@ -66,8 +66,6 @@ const StudentDashboard = () => {
           </div>
         </div>
 
-
-
         <div className="card">
           <div className="flex items-center">
             <div className="p-3 bg-blue-100 rounded-lg">👨‍🏫</div>

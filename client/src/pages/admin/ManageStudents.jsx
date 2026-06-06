@@ -41,9 +41,12 @@ const ManageStudents = () => {
     return safeUsers
       .filter((u) => u.role?.toLowerCase() === "student")
       .map((student) => {
-        const studentProject = projects.find(
-          (p) => p.student === student._id
-        );
+        const studentProject = projects.find((p) => {
+          if (!p?.student) return false;
+          return p.student._id
+            ? p.student._id === student._id
+            : p.student === student._id;
+        });
 
         return {
           ...student,
@@ -171,7 +174,7 @@ const ManageStudents = () => {
             <div className="ml-4">
               <p>Completed Projects</p>
               <p>
-                {students.filter((s) => s.status === "completed").length}
+                {students.filter((s) => s.projectStatus === "completed").length}
               </p>
             </div>
           </div>
@@ -256,7 +259,7 @@ const ManageStudents = () => {
                               student.supervisor ? (
                                 <span className=
                                   "inline-flex items-center px-2 py-0.5 rounded-full text-green-800 bg-gray-100 text-xs font-medium">
-                                  {users?.find((u) => u._id === student?.supervisor)?.name}
+                                  {student.supervisor?.name || users?.find((u) => u._id === student?.supervisor)?.name}
                                 </span>
                               ) : (
                                 <span className=

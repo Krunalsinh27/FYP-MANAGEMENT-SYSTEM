@@ -2,7 +2,10 @@ import ErrorHandler from "../middlewares/error.js";
 import { Project } from "../models/project.js"; 
 
 export const getProjectByStudentId = async (studentId) => {
-    return await Project.findOne({ student: studentId }).sort({ createdAt: -1 });
+    return await Project.findOne({ student: studentId })
+        .sort({ createdAt: -1 })
+        .populate("student", "name email supervisor")
+        .populate("supervisor", "name email");
 };
 
 export const createProject = async (projectData) => {

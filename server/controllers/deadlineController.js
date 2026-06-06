@@ -29,7 +29,7 @@ export const createDeadline = asyncHandler(async (req, res, next) => {
 
     await deadline.populate([
         { path: "createdBy", select: "name email" }, 
-        { path: "project", select: "title student" },
+        // { path: "project", select: "title student" },
     ]);
 
     if (project) {

@@ -32,7 +32,7 @@ const DeadlinesPage = () => {
       studentName: p.student?.name || '-',
       studentEmail: p.student?.email || '-',
       studentDept: p.student?.department || '-',
-      supervisor: p.supervisor?.name || '-',
+      supervisor: p.supervisor?.name || p.student?.supervisor?.name || '-',
       deadline: p.deadline ? new Date(p.deadline).toISOString().slice(0, 10) : "-",
       updatedAt: p.updatedAt ? new Date(p.updatedAt).toLocaleString() : "-",
       raw: p,
@@ -52,7 +52,7 @@ const DeadlinesPage = () => {
 
     let deadlineData = {
       name: selectedProject?.student?.name,
-      dueDate: selectedProject?.deadlineData,
+      dueDate: formData.deadlineDate,
       project: selectedProject?._id,
     };
 
@@ -125,7 +125,7 @@ const DeadlinesPage = () => {
               </tr>
             </thead>
 
-            <tbody className="bg-white divide-white divide-slate-200">
+            <tbody className="bg-white divide-y divide-slate-200">
               {
                 filteredProject.map((row) => {
                   return (
@@ -194,30 +194,32 @@ const DeadlinesPage = () => {
                   {
                     query && !selectedProject && (
                       <div className="mt-2 border border-slate-200 rounded-md max-h-56 overflow-auto">
-                        {(projects || []).filter((p) => 
-                        (p.title || "")
-                        .toLowerCase()
-                        .includes(query.toLowerCase())
+                        {(projects || []).filter((p) =>
+                          (p.title || "")
+                            .toLowerCase()
+                            .includes(query.toLowerCase())
                         ).slice(0, 8)
                           .map((p) => (<button type="button" key={p._id}
                             className="w-full text-left px-3 py-2 hover:bg-slate-50"
                             onClick={() => {
                               setSelectedProject(p);
-                                setQuery(p.title);
-                                setFormData({
-                                  ...formData,
-                                  projectTitle: p.title,
-                                  deadlineDate: p.deadline ?
-                                    new Date(p.deadline).toISOString().slice(1, 10) :
-                                    "",
-                                });
+                              setQuery(p.title);
+                              setFormData({
+                                ...formData,
+                                projectTitle: p.title,
+                                deadlineDate: p.deadline ?
+                                  new Date(p.deadline).toISOString().slice(0, 10) :
+                                  "",
+                              });
                             }}
                             title={p.title}
                           >
                             <div className="text-sm font-medium text-slate-800 truncate">{p.title}</div>
                             <div className="text-xs text-slate-500 truncate">
-                              {p.student?.name || "-"} 
-                              {p.supervisor?.name || "-"}
+                              {p.student?.name || "-"}
+                            </div>
+                            <div className="text-xs text-slate-500 truncate">
+                              Supervisor: {p.supervisor?.name || "Not Assigned"}
                             </div>
                           </button>
                           ))}
@@ -227,18 +229,47 @@ const DeadlinesPage = () => {
 
                 <div>
                   <label className="label">Deadline</label>
-                  <input type="date" className="input-field w-full" disabled={!selectedProject} value={formData.deadlineDate} onChange={(e)=> setFormData({...formData, deadlineDate: e.target.value})} />
+                  <input type="date" className="input-field w-full" disabled={!selectedProject} value={formData.deadlineDate} onChange={(e) => setFormData({ ...formData, deadlineDate: e.target.value })} />
                 </div>
 
-                    {
-                      selectedProject && (
-                        <div className="mt-4 border border-slate-200 rounded-lg p-4 bg-slate-50">
-                          <div className="mb-2">
-                            <div className="text-sm font-semibold text-slate-900">Project Details</div>
-                            <div className="text-sm truncate text-slate-700" title={selectedProject.description || ''} ></div>
+                {
+                  selectedProject && (
+                    <div className="mt-4 border border-slate-200 rounded-lg p-4 bg-slate-50">
+                      <div className="mb-2">
+                        <div className="text-sm font-semibold text-slate-900">Project Details</div>
+                        <div className="text-sm truncate text-slate-700" title={selectedProject.description || ''} >
+                          {(selectedProject.description || "").length > 160
+                            ? `${selectedProject.description.slice(0, 160)}...`
+                            : selectedProject.description}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <div className="text-xs text-slate-500">Status</div>
+                          <div className="text-sm font-medium text-slate-800">{selectedProject.status || "Unknown"}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-slate-500">Supervisor</div>
+                          <div className="text-sm font-medium text-slate-800">{selectedProject.supervisor?.name || selectedProject.student?.supervisor?.name || "Not Assigned"}</div>
+                        </div>
+                        <div className="md:col-span-2">
+                          <div className="text-xs text-slate-500">Student</div>
+                          <div className="space-y-1">
+                            <div className="text-sm font-medium text-slate-800">{selectedProject.student?.name || "-"}</div>
+                            <div className="text-sm text-slate-500">{selectedProject.student?.email || "-"}</div>
+                            <div className="text-sm text-slate-500">{selectedProject.student?.department || "-"}</div>
                           </div>
                         </div>
-                      )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end space-x-3 pt-4">
+                    <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">Cancel</button>
+                    <button type="submit" className="btn-primary">Save Deadline</button>
+                  </div>
+
 
               </form>
             </div>

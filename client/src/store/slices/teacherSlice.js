@@ -2,6 +2,8 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { axiosInstance } from "../../lib/axios";
 import { toast } from "react-toastify";
 
+export const getTeacherDashboardStats = createAsyncThunk("getTeacherDashboardStats", async(_, thunkAPI) => {})
+
 const teacherSlice = createSlice({
   name: "teacher",
   initialState: {
