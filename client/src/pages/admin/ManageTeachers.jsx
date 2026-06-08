@@ -55,6 +55,22 @@ const ManageTeachers = () => {
     });
   }, [teachers, searchTerm, filterDepartment]);
 
+  // const departments = useMemo(() => {
+  //   const set = new Set(
+  //     (teachers || []).map((t) => t.department).filter(Boolean)
+  //   );
+  //   return Array.from(set);
+  // }, [teachers]);
+
+  // const filteredTeachers = teachers.filter((teacher) => {
+  //   const matchesSearch = 
+  //     (teacher.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     (teacher.email || "").toLowerCase().includes(searchTerm.toLowerCase());
+    
+  //   const matchesFilter = 
+  //     filterDepartment === "all" || teacher.department === filterDepartment;
+  //   return matchesSearch && matchesFilter;
+  // });
 
   const handleCloseModal = () => {
     setShowModal(false);
