@@ -1,5 +1,5 @@
 import express from "express";
-import { getTeacherDashboardStats, acceptRequest, getRequest, rejectRequest } from "../controllers/teacherController.js";
+import { getTeacherDashboardStats, acceptRequest, getRequest, rejectRequest, addFeedback, markComplete, getAssignedStudents } from "../controllers/teacherController.js";
 import {
     isAuthenticated,
     isAuthorized,
@@ -33,6 +33,27 @@ router.put(
     isAuthenticated,
     isAuthorized("Teacher"),
     rejectRequest
+);
+
+router.post(
+    "/feedback/:projectId",
+    isAuthenticated,
+    isAuthorized("Teacher"),
+    addFeedback
+);
+
+router.post(
+    "/mark-complete/:projectId",
+    isAuthenticated,
+    isAuthorized("Teacher"),
+    markComplete
+);
+
+router.get(
+    "/assigned-students",
+    isAuthenticated,
+    isAuthorized("Teacher"),
+    getAssignedStudents
 );
 
 export default router;

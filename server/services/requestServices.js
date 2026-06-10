@@ -32,7 +32,7 @@ export const acceptRequest = async (requestId, supervisorId) => {
 
     if (!request) throw new Error("Request not found");
 
-    if (request.supervisor._id.toString() !== supervisorId) {
+    if (request.supervisor._id.toString() !== supervisorId.toString()) {
         throw new Error("Not authorized to accept this request");
     }
 
@@ -52,7 +52,7 @@ export const rejectRequest = async (requestId, supervisorId) => {
 
     if (!request) throw new Error("Request not found");
 
-    if (request.supervisor._id.toString() !== supervisorId) {
+    if (request.supervisor._id.toString() !== supervisorId.toString()) {
         throw new Error("Not authorized to reject this request");
     }
 

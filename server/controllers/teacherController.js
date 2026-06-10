@@ -83,7 +83,7 @@ export const acceptRequest = asyncHandler(async (req, res, next) => {
     if (!request) return next(new ErrorHandler("Request not found", 404));
 
     await notificationServices.notifyUser(
-        request.student._id, 
+        request.student._id,
         `Your supervisor request has been accepted by ${req.user.name}`,
         "approval",
         "/students/status",
@@ -94,10 +94,10 @@ export const acceptRequest = asyncHandler(async (req, res, next) => {
     const student = await User.findById(request.student._id);
     const studentEmail = student.email;
     const message = generateRequestAcceptedTemplate(req.user.name);
-    await sendEmail({ 
-        to: studentEmail, 
-        subject: "FYP SYSTEM -✅ Your supervisor request has been Accepted", 
-        message, 
+    await sendEmail({
+        to: studentEmail,
+        subject: "FYP SYSTEM -✅ Your supervisor request has been Accepted",
+        message,
     });
 
     res.status(200).json({
@@ -126,10 +126,10 @@ export const rejectRequest = asyncHandler(async (req, res, next) => {
     const student = await User.findById(request.student._id);
     const studentEmail = student.email;
     const message = generateRequestRejectedTemplate(req.user.name);
-    await sendEmail({ 
-        to: studentEmail, 
-        subject: "FYP SYSTEM - ❌ Your supervisor request has been Rejected", 
-        message, 
+    await sendEmail({
+        to: studentEmail,
+        subject: "FYP SYSTEM - ❌ Your supervisor request has been Rejected",
+        message,
     });
 
     res.status(200).json({
@@ -137,6 +137,111 @@ export const rejectRequest = asyncHandler(async (req, res, next) => {
         message: "Request rejected",
         data: { request },
     });
-
-    
 })
+
+export const getAssignedStudents = asyncHandler(async (req, res, next) => {
+    const teacherId = req.user._id;
+    const students = await User.find({ supervisor: teacherId }).populate("project").sort({ createdAt: -1 });
+
+    const total = await User.countDocuments({ supervisor: teacherId });
+
+    res.status(200).json({
+        success: true,
+        data: {
+            students,
+            total,
+        },
+    });
+});
+
+export const markComplete = asyncHandler(async (req, res, next) => {
+    const { projectId } = req.params;
+    const teacherId = req.user._id;
+
+    const project = await projectServices.getProjectById(projectId);
+
+    if (!project) return next(new ErrorHandler("Project not found", 404));
+    if (project.supervisor._id.toString() !== teacherId.toString()) {
+        return next(new ErrorHandler("Not authorized to mark complete", 403));
+    }
+
+    const updatedProject = await projectServices.markComplete(projectId);
+
+    await notificationServices.notifyUser(
+        project.student._id,
+        `Your project has been marked as completed by your supervisor (${req.user.name})`,
+        "general",
+        "/students/status",
+        "low"
+    );
+
+    res.status(200).json({
+        success: true,
+        data: {
+            project: updatedProject,
+        },
+        message: "Project marked as completed",
+    });
+});
+
+export const addFeedback = asyncHandler(async (req, res, next) => {
+    const { projectId } = req.params;
+    const teacherId = req.user._id;
+    const { message, title, type } = req.body;
+
+    const project = await projectServices.getProjectById(projectId);
+    if (!project) return next(new ErrorHandler("Project not found", 404));
+    if (project.supervisor._id.toString() !== teacherId.toString()) {
+        return next(new ErrorHandler("Not authorized to mark complete", 403));
+    }
+
+    if (!message || !title) return next(new ErrorHandler("Feedback title and message are required", 400));
+
+    const { peoject: updatedProject, latestFeedback } =
+        await projectServices.addFeedback(
+            projectId,
+            teacherId,
+            message,
+            title,
+            type
+        );
+
+    await notificationServices.notifyUser(
+        project.student._id,
+        `New feedback from your supervisor (${req.user.name})`,
+        "feedback",
+        "/students/feedback",
+        type === "possitive" ? "low" : type === "negative" ? "high" : "low"
+    );
+
+    res.status(200).json({
+        succes: true,
+        message: "Feedback posted successfully",
+        data: { project: updatedProject, feedback: latestFeedback },
+    });
+});
+
+export const getFiles = asyncHandler(async (req, res, next) => {
+    const teacherId = req.user._id;
+
+    const projects = await projectServices.getProjectBySupervisor(teacherId);
+
+    const allFiles = projects.flatMap((project) =>
+        project.files.map((file) => ({
+            ...file.toObject(),
+            projectId: project._id,
+            projectTitle: project.title,
+            studentName: project.student.name,
+            studentEmail: project.student.email,
+        }))
+    );
+
+    res.status(200).json({
+        success: true,
+        message: "File fetched",
+        data: {
+            files: allFiles,
+            total,
+        },
+    });
+});

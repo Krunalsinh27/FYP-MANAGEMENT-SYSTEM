@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { acceptRequest, getTeacherRequests, rejectRequest } from "../../store/slices/teacherSlice";
+import { FileText } from "lucide-react"
 
 const PendingRequests = () => {
 
@@ -44,17 +45,16 @@ const PendingRequests = () => {
     }
   };
 
-
   const requests = Array.isArray(list)
     ? list
     : Array.isArray(list?.requests)
-    ? list.requests
-    : [];
+      ? list.requests
+      : [];
 
   const filteredRequests = requests.filter((request) => {
     const matchesSearch =
       (request?.student?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (request?.project?.title || "").toLowerCase().includes(searchTerm.toLowerCase());
+      (request?.latestProject?.title || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
       filterStatus === "all" || request.status === filterStatus;
     return matchesSearch && matchesStatus;
@@ -91,53 +91,86 @@ const PendingRequests = () => {
 
         {/* REQUESTS */}
         <div className="space-y">
-          {
-            filteredRequests.map((req, index) => {
-              const id = req._id || req.id || `request-${index}`;
-              const project = req.latestProject;
-              const projectStatus = project?.status?.toLowerCase() || "pending";
-              const supervisorAssigned = !!project?.supervisor;
-              const canAccept = projectStatus === "approved" && !supervisorAssigned;
-              const lm = loadingMap[id] || {};
+          {filteredRequests.map((req) => {
+            const id = req._id;
+            const project = req.latestProject;
+            const projectStatus = project?.status?.toLowerCase() || "pending";
+            const supervisorAssigned = !!project?.supervisor;
+            const canAccept = projectStatus === "approved" && !supervisorAssigned;
+            const lm = loadingMap[id] || {};
 
-              let bgClass = "bg-white";
-              let StatusMessage = "";
+            let bgClass = "bg-white";
+            let StatusMessage = "";
 
-              if(projectStatus === "approved" && supervisorAssigned){
-                bgClass = "bg-blue-50 border-blue-300";
-                StatusMessage = "Supervisor already assigned";
-              }else if(projectStatus === "rejected"){
-                bgClass = "bg-red-50 border-red-300";
-                StatusMessage = "Project proposal rejected";
-              }else if(projectStatus === "pending"){
-                bgClass = "bg-yellow-50 border-yellow-300";
-                StatusMessage = "Project proposal pending";
-              }
-              return <div key={id} className={`card border ${bgClass} transition-all`}>
-                <div className="flex flex-col lg:flex-row justify-between">
-                  {/* INFO */}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-slate-800">{req?.student?.name || "Unknow Student"}</h3>
-                      <span className={`badge ${req.status === "pending" ? "badge-pending" : req.status === "accepted" ? "badge-approved" : "badge-rejected"}`}>{req.status?.charAt(0).toUpperCase() + req.status?.slice(1)}</span>
-                    </div>
-
-                    <p className="text-sm text-slate-600 mb-1">{req.student?.email || "No email"}</p>
-                    <h4 className="font-medium text-slate-700 mb-2">{project?.title || "No project title"}</h4>
-                    <p className="text-xs text-slate-500">Submitted:{" "}{req?.createdAt ? new Date(req.createdAt).toLocaleDateString() : "-"}</p>
-
-                    {
-                      StatusMessage && (
-                        <p className="mt-2 text-sm font-medium text-slate-700">{StatusMessage}</p>
-                      )
-                    }
+            if (projectStatus === "approved" && supervisorAssigned) {
+              bgClass = "bg-blue-50 border-blue-300";
+              StatusMessage = "Supervisor already assigned";
+            } else if (projectStatus === "rejected") {
+              bgClass = "bg-red-50 border-red-300";
+              StatusMessage = "Project proposal rejected";
+            } else if (projectStatus === "pending") {
+              bgClass = "bg-yellow-50 border-yellow-300";
+              StatusMessage = "Project proposal pending";
+            }
+            return <div key={id} className={`card border ${bgClass} transition-all`}>
+              <div className="flex flex-col lg:flex-row justify-between">
+                {/* INFO */}
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-lg font-semibold text-slate-800">{req?.student?.name || "Unknow Student"}</h3>
+                    <span className={`badge ${req.status === "pending" ? "badge-pending" : req.status === "accepted" ? "badge-approved" : "badge-rejected"}`}>{req.status?.charAt(0).toUpperCase() + req.status?.slice(1)}</span>
                   </div>
+
+                  <p className="text-sm text-slate-600 mb-1">{req.student?.email || "No email"}</p>
+                  <h4 className="font-medium text-slate-700 mb-2">{project?.title || "No project title"}</h4>
+                  <p className="text-xs text-slate-500">Submitted:{" "}{req?.createdAt ? new Date(req.createdAt).toLocaleDateString() : "-"}</p>
+
+                  {
+                    StatusMessage && (
+                      <p className="mt-2 text-sm font-medium text-slate-700">{StatusMessage}</p>
+                    )
+                  }
                 </div>
+
+                {/* ACTIONS */}
+                {
+                  req.status === "pending" && (
+                    <div className="flex items-center gap-3 mt-3">
+                      <button className={`px-4 py-1.5 text-sm rounded-lg font-medium transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${canAccept
+                        ? "bg-green-600 hover:bg-green-700 text-white"
+                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        }`} disabled={lm.accepting || !canAccept} onClick={() => handleAccept(req)}>
+                        {lm.accepting ? "Accepting" : "Accept"}
+                      </button>
+
+
+                      <button className={`px-4 py-1.5 text-sm rounded-lg font-medium transition-colors duration-200 disabled:opacity-60 bg-red-600 hover:bg-red-700 text-white
+                          disabled:cursor-not-allowed
+                          }`} disabled={lm.rejecting} onClick={() => handleReject(req)}>
+                        {lm.rejecting ? "Rejecting" : "Reject"}
+                      </button>
+                    </div>
+                  )}
               </div>
-            })}
+            </div>
+
+          })}
+
+
+          {/* NO REQUEST */}
+          {
+            filteredRequests.length === 0 && (
+              <div className="card text-center py-8">
+                <FileText className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-slate-800 mb-2">No requests found</h3>
+                {" "}
+                <p className="text-slate-600">No supervision requests match your filters.</p>
+              </div>
+            )
+          }
         </div>
       </div>
-
+      { }
     </>
   );
 };
