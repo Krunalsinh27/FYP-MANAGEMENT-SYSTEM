@@ -36,28 +36,32 @@ import { ToastContainer } from "react-toastify";
 import { Loader } from "lucide-react";
 import { getUser } from "./store/slices/authSlice";
 import { getAllProjects, getAllUsers } from "./store/slices/adminSlice";
+import { fetchDashboardStats } from "./store/slices/studentSlice";
 
 const App = () => {
   const { authUser, isCheckingAuth } = useSelector(state => state.auth);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(getUser());  
+    dispatch(getUser());
   }, [dispatch]);
 
   useEffect(() => {
-    if(authUser?.role === "Admin"){
+    if (authUser?.role === "Admin") {
       dispatch(getAllUsers());
       dispatch(getAllProjects());
+    }
+    if (authUser?.role === "Student") {
+      dispatch(fetchDashboardStats());
     }
   }, [authUser]);
 
   const ProtectedRoute = ({ children, allowedRoles }) => {
-    if(!authUser){
+    if (!authUser) {
       return <Navigate to="/login" replace />;
     }
 
-    if(allowedRoles?.length && authUser?.role && !allowedRoles.includes(authUser.role)){
+    if (allowedRoles?.length && authUser?.role && !allowedRoles.includes(authUser.role)) {
       const redirectPath = authUser.role === "Admin" ? "/admin" : authUser.role === "Teacher" ? "/teacher" : "/student";
 
       return <Navigate to={redirectPath} replace />;
@@ -66,7 +70,7 @@ const App = () => {
     return children;
   };
 
-  if(isCheckingAuth && !authUser){
+  if (isCheckingAuth && !authUser) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader className="size-10 animate-spin" />
@@ -84,6 +88,16 @@ const App = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+        {/* Admin Routes */}
+        <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]}><DashboardLayout userRole="Admin" /></ProtectedRoute>}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="students" element={<ManageStudents />} />
+          <Route path="teachers" element={<ManageTeachers />} />
+          <Route path="assign-supervisor" element={<AssignSupervisor />} />
+          <Route path="deadlines" element={<DeadlinesPage />} />
+          <Route path="projects" element={<ProjectsPage />} />
+        </Route>
 
         {/* Student Routes */}
         <Route path="/student" element={
@@ -111,16 +125,18 @@ const App = () => {
           <Route path="files" element={<TeacherFiles />} />
         </Route>
 
-        {/* Admin Routes */}
-        <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]}><DashboardLayout userRole="Admin"/></ProtectedRoute>}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="students" element={<ManageStudents />} />
-          <Route path="teachers" element={<ManageTeachers />} />
-          <Route path="assign-supervisor" element={<AssignSupervisor />} />
-          <Route path="deadlines" element={<DeadlinesPage />} />
-          <Route path="projects" element={<ProjectsPage />} />
-        </Route>
+        {/* DEFAUL REDIRECT */}
+        <Route path="/" element={<Navigate to={"/login"} replace />} />
 
+        <Route path="/unauthorized" element={
+          <div className="min-h-screen flex items-center justify-center bg-slate-50">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-slate-800 mb-4">Unauthorized Access</h1>
+              <p className="text-slate-600 mb-4">You don't have permission to access this page.</p>
+              <button onClick={() => window.history.back()} className="btn-primart">Go Back</button>
+            </div>
+          </div>
+        } />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <ToastContainer theme="dark" />

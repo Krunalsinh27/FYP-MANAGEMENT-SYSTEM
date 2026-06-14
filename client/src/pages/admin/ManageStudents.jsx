@@ -136,7 +136,7 @@ const ManageStudents = () => {
     <div className="space-y-6">
       {/* HEADER */}
       <div className="card">
-        <div className="card-header flex justify-between items-center">
+        <div className="card-header flex flex-col md:flex-row justify-between items-start md:items-center">
           <div>
             <h1 className="card-title">Manage Students</h1>
             <p className="card-subtitle">
@@ -146,7 +146,7 @@ const ManageStudents = () => {
 
           <button
             onClick={() => dispatch(toggleStudentModal())}
-            className="btn-primary flex items-center space-x-2"
+            className="btn-primary flex items-center space-x-2 mt-4 md:mt-0"
           >
             <Plus className="w-5 h-5" />
             <span>Add New Student</span>

@@ -64,7 +64,7 @@ export const uploadFiles = asyncHandler(async (req, res, next) => {
     const studentId = req.user._id;
     const project = await projectServices.getProjectById(projectId);
 
-    if(!project || project.student._id.toString() !== studentId.toString()){
+    if(!project || project.student._id.toString() !== studentId.toString() || project.status === "rejected"){
         return next(new ErrorHandler("Not authorized to upload files for this project", 403));
     }
     if(!req.files || req.files.length === 0){
@@ -156,7 +156,7 @@ export const getDashboardState = asyncHandler(async(req, res, next) => {
         student: studentId,
         deadline: {$gte: now},
     })
-        .select("title description")
+        .select("title description deadline")
         .sort({createdAt: 1})
         .limit(3)
         .lean();
@@ -186,19 +186,25 @@ export const getFeedback = asyncHandler(async(req, res, next) => {
 
     const project = await projectServices.getProjectById(projectId);
 
-    if(!project || project.student.toString() !== studentId.toString()) {
-        return next(new ErrorHandler("Not authorized to view feedback for this project", 403)).map((f)=> ({
+    // project.student may be populated (object) or just an id; handle both
+    const projectStudentId = project?.student?._id ? project.student._id.toString() : project?.student?.toString();
+
+    if (!project || projectStudentId !== studentId.toString()) {
+        return next(new ErrorHandler("Not authorized to view feedback for this project", 403));
+    }
+
+    const sortedFeedback = (project.feedback || [])
+        .slice()
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .map((f) => ({
             _id: f._id,
             title: f.title,
             message: f.message,
             type: f.type,
             createdAt: f.createdAt,
-            supervisorName: f.supervisorId?.name,
-            supervisorEmail: f.supervisorId?.email,
+            supervisorName: f.supervisorId?.name || null,
+            supervisorEmail: f.supervisorId?.email || null,
         }));
-    }
-
-    const sortedFeedback = project.feedback.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     res.status(200).json({
         success: true,
@@ -212,7 +218,7 @@ export const downloadFile = asyncHandler(async(req, res, next) => {
 
     const project = await projectServices.getProjectById(projectId);
     if(!project) return next(new ErrorHandler("Project not found", 404));
-    if(project.student.id.toString() !== studentId.toString()){
+    if(project.student._id.toString() !== studentId.toString()){
         return next(new ErrorHandler("Not authorized to download file", 403))
     }
     const file = project.files.id(fileId);

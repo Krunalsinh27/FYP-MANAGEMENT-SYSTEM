@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAllSupervisors, fetchProject, getSupervisor, requestSupervisor } from "../../store/slices/studentSlice";
-import {X} from "lucide-react";
+import { X } from "lucide-react";
 
 const SupervisorPage = () => {
   const dispatch = useDispatch();
   const { authUser } = useSelector((state) => state.auth);
-  const { project, supervisors, supervisor} = useSelector((state) => state.student);
+  const { project, supervisors, supervisor } = useSelector((state) => state.student);
 
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [requestMessage, setRequestMessage] = useState("");
@@ -26,13 +26,13 @@ const SupervisorPage = () => {
   }, [dispatch]);
 
 
-  const hasSupervisor = useMemo(()=> !!(supervisor && supervisor._id),[supervisor]);
+  const hasSupervisor = useMemo(() => !!(supervisor && supervisor._id), [supervisor]);
   const hasProject = useMemo(() => !!(project && project._id), [project]);
 
   const formatDeadline = (dateStr) => {
-    if(!dateStr) return "-";
+    if (!dateStr) return "-";
     const date = new Date(dateStr);
-    if(isNaN(date.getTime())) return "-";
+    if (isNaN(date.getTime())) return "-";
     const day = date.getDate();
     const j = day % 10, k = day % 100;
     const suffix = j === 1 && k !== 11 ? "st" : j === 2 && k !== 12 ? "nd" : j === 3 && k !== 13 ? "rd" : "th";
@@ -41,25 +41,25 @@ const SupervisorPage = () => {
     return `${day}${suffix} ${month} ${year}`;
   };
 
-  const handleOpenRequest = (supervisor)=>{
+  const handleOpenRequest = (supervisor) => {
     setSelectedSupervisor(supervisor);
     setShowRequestModal(true);
   };
 
   const submitRequest = () => {
-    if(!selectedSupervisor) return;
+    if (!selectedSupervisor) return;
     const message = requestMessage?.trim() || `${authUser.name || "Student"} has request ${selectedSupervisor.name} to be their supervisor.`;
-    dispatch(requestSupervisor({teacherId: selectedSupervisor._id, message})).then((res)=>{
-      if(res.type === "student/requestSupervisor/fulfilled"){
-        setShowRequestModal(false);   
+    dispatch(requestSupervisor({ teacherId: selectedSupervisor._id, message })).then((res) => {
+      if (res.type === "student/requestSupervisor/fulfilled") {
+        setShowRequestModal(false);
       }
     });
-    
+
   };
 
   return <>
     <div className="space-y-6">
-      
+
       {/* CURRENT SUPERVISOR */}
       <div className="card">
         <div className="card-header">
@@ -78,7 +78,7 @@ const SupervisorPage = () => {
                 <div className="flex-1 space-y-4">
                   <div>
                     <h3 className="text-2xl font-bold text-slate-800">{supervisor?.name || "-"}</h3>
-                      <p className="text-lg text-slate-600">{supervisor?.department || "-"}</p>
+                    <p className="text-lg text-slate-600">{supervisor?.department || "-"}</p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -93,7 +93,7 @@ const SupervisorPage = () => {
                 </div>
               </div>
             </div>
-          ):(
+          ) : (
             <div className="p-6 text-center">
               <p className="text-slate-600 text-lg">Supervisor not assigned yet.</p>
             </div>
@@ -117,7 +117,18 @@ const SupervisorPage = () => {
                 <div>
                   <label className="text-sm font-medium text-slate-500 uppercase tracking-wide">Status</label>
                   <div className="mt-1">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full font-medium capitalize text-sm ${project?.status === "approved" ? "bg-green-100 text-green-800" : project?.status === "pending" ? "bg-yellow-100 text-yellow-800" : project?.status === "rejected" ? "bg-red-100 text-red-800" : "bg-gray-100 text-orange-800"}`}>{project?.status || "Invalid"}</span>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full font-medium capitalize text-sm 
+                      ${project?.status === "approved"
+                        ? "bg-green-100 text-green-800"
+                        : project?.status === "pending"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : project?.status === "rejected"
+                            ? "bg-red-100 text-red-800"
+                            : project?.status === "completed"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-gray-100 text-orange-800"}`}>
+                      {project?.status || "Invfalid"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -162,7 +173,7 @@ const SupervisorPage = () => {
               <p className="text-slate-600 text-lg">You haven't submitted any project proposal yet, so you cannot request a supervisor.</p>
             </div>
           </div>
-      )}
+        )}
 
       {/* AVAILABEL SUPERVISORS | ONLY WHEN PROJECT EXISTS AND NO SUPERVISOR ASSIGNED */}
       {
@@ -175,7 +186,7 @@ const SupervisorPage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
               {
-                supervisors && supervisors.map(sup=>(
+                supervisors && supervisors.map(sup => (
                   <div key={sup._id} className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow">
 
 
@@ -200,7 +211,7 @@ const SupervisorPage = () => {
                       </div>
                     </div>
 
-                    <button onClick={()=> handleOpenRequest(sup)} className="btn-primary w-full">Request Supervisor</button>
+                    <button onClick={() => handleOpenRequest(sup)} className="btn-primary w-full">Request Supervisor</button>
 
                   </div>
                 ))}
@@ -208,44 +219,44 @@ const SupervisorPage = () => {
           </div>
         )}
 
-        {/* REQUEST MODAL */}
-        {
-          showRequestModal && selectedSupervisor && (
-            <div className="modal-overlay">
-              <div className="modal-content">
-                <div className="p-6">
-                  <div className="flex item-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-slate-800">Request Supervision</h3>
-                    <button className="text-slate-400 hover:text-slate-600" onClick={()=>{setShowRequestModal(false); setSelectedSupervisor(null); setRequestMessage("");}}>
-                      <X className="w-5 h-5"/>
-                    </button>
+      {/* REQUEST MODAL */}
+      {
+        showRequestModal && selectedSupervisor && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <div className="p-6">
+                <div className="flex item-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-slate-800">Request Supervision</h3>
+                  <button className="text-slate-400 hover:text-slate-600" onClick={() => { setShowRequestModal(false); setSelectedSupervisor(null); setRequestMessage(""); }}>
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="p-4 bg-slate-50 rounded-md">
+                    <p className="text-sm text-slate-600 ">{selectedSupervisor?.name}</p>
+                  </div>
+                  <div>
+                    <label className="label">Message to Supervisor</label>
+                    <textarea className="input min-h-[120px]" required value={requestMessage} onChange={(e) => setRequestMessage(e.target.value)} placeholder="Introduce yourself and explain why you'd like this professor to supervisor your project..." />
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="p-4 bg-slate-50 rounded-md">
-                      <p className="text-sm text-slate-600 ">{selectedSupervisor?.name}</p>
-                    </div>
-                    <div>
-                      <label className="label">Message to Supervisor</label>
-                      <textarea className="input min-h-[120px]" required value={requestMessage} onChange={(e)=>setRequestMessage(e.target.value)} placeholder="Introduce yourself and explain why you'd like this professor to supervisor your project..." />
-                    </div>
-
-                    <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
-                      <button onClick={()=>{
-                        setShowRequestModal(false);
-                        setSelectedSupervisor(null);
-                        setRequestMessage("");
-                      }} className="btn-outline">Cancel</button>
-                      <button onClick={submitRequest} className="btn-primary" disabled={!requestMessage.trim()}>Send Request</button>
-                    </div>
+                  <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
+                    <button onClick={() => {
+                      setShowRequestModal(false);
+                      setSelectedSupervisor(null);
+                      setRequestMessage("");
+                    }} className="btn-outline">Cancel</button>
+                    <button onClick={submitRequest} className="btn-primary" disabled={!requestMessage.trim()}>Send Request</button>
                   </div>
                 </div>
               </div>
             </div>
-          )
-        }
+          </div>
+        )
+      }
     </div>
-  
+
   </>;
 };
 

@@ -100,7 +100,7 @@ export const downloadFile = createAsyncThunk("downloadfile", async ({ projectId,
         responseType: "blob",
       }
     );
-    return {blob: res.data, projectId, fileId}
+    return {projectId, fileId, success: true}
   } catch (error) {
       return thunkAPI.rejectWithValue(error.response?.data?.message || "Failed to download file")
   }

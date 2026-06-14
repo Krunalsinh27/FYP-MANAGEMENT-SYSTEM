@@ -15,7 +15,7 @@ import AddTeacher from "../../components/modal/AddTeacher";
 import { toast } from "react-toastify";
 import { getDashboardStats, getAllProjects } from "../../store/slices/adminSlice";
 import { getNotifications } from "../../store/slices/notificationSlice";
-import { downloadProjectFile } from "../../store/slices/projectSlice";
+import { axiosInstance } from "../../lib/axios";
 import { AlertCircle, Box, User, Folder, AlertTriangle, PlusIcon, FileTextIcon, X } from "lucide-react";
 import { toggleStudentModal, toggleTeacherModal } from "../../store/slices/popupSlice";
 
@@ -25,7 +25,7 @@ const AdminDashboard = () => {
 
   const { stats, projects } = useSelector((state) => state.admin);
   // const {  } = useSelector((state) => state.project);
-  const { notifications } = useSelector((state) => state.notification.list);
+  const notifications = useSelector((state) => state.notification.list);
 
   const dispatch = useDispatch();
 
@@ -69,8 +69,9 @@ const AdminDashboard = () => {
 
   const handleDownload = async (projectId, fileId, name) => {
     try {
-      const { blob } = await dispatch(downloadProjectFile({ projectId, fileId })).unwrap();
-      const url = window.URL.createObjectURL(new Blob([blob]));
+      const res = await axiosInstance.get(`/project/${projectId}/files/${fileId}/download`, { responseType: "blob" });
+      const blob = res.data;
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", name || "download");
@@ -78,8 +79,9 @@ const AdminDashboard = () => {
       link.click();
       link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
+      toast.success("File downloaded successfully");
     } catch (error) {
-      toast.error(error || "Failed to download file");
+      toast.error(error?.response?.data?.message || "Failed to download file");
     }
   };
 
@@ -293,10 +295,10 @@ const AdminDashboard = () => {
                     <div className="flex-1">
                       <p className="font-medium text-slate-800">{n.message}</p>
                       <div className="mt-1 flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded text-sm font-medium ${(getBadgeClasses("type"), String(n.type))}`}>
-                          Type: {n.type}
+                        <span className={`px-2 py-0.5 rounded text-sm font-medium ${(getBadgeClasses("type", n.type))} capitalize`}>
+                          {n.type}
                         </span>
-                        <span className={`px-2 py-0.5 rounded text-sm font-medium`}>Priority: {n.priority}</span>
+                        <span className={`px-2 py-0.5 rounded text-sm font-medium capitalize ${getBulletColor(n.type, n.priority)}`}>{n.priority}</span>
                       </div>
                     </div>
                   </div>

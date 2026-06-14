@@ -45,32 +45,37 @@ const NotificationsPage = () => {
     }
   };
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case "high":
-        return "border-red-500";
-      case "medium":
-        return "border-yellow-500";
-      case "low":
-        return "border-green-500";
+  const getTypeBadgeClasses = (type) => {
+    switch (type) {
+      case "feedback":
+        return "badge-approved";
+      case "deadline":
+        return "badge-rejected";
+      case "approval":
+        return "badge-completed";
+      case "meeting":
+        return "badge-pending";
       default:
-        return "border-slate-300";
+        return "badge badge-pending text-slate-700 bg-slate-100";
     }
   };
 
   const formateDate = (dateStr) => {
     const date = new Date(dateStr);
     const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 1) {
-      return "yesterday";
-    } else if (diffDays <= 7) {
-      return `${diffDays} day ago`;
-    } else {
-      return date.toLocaleDateString();
-    }
+    const diffMs = now - date;
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if(diffMinutes < 1) return "Just now";
+    if(diffMinutes < 60) return `${diffMinutes} min ago`;
+    if(diffHours < 24) return `${diffHours} hrs ago`;
+    if(diffDays === 1) return "Yesterday";
+    if(diffDays <= 7) return `${diffDays} days ago`;
+
+    return date.toLocaleDateString();
   };
 
   const stats = [
@@ -128,15 +133,17 @@ const NotificationsPage = () => {
 
         {/* CARD HEADER */}
         <div className="card-header">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
             <div>
               <h1 className="card-title">Notifications</h1>
               <p className="card-subtitle">
                 Stay updated with your project progress and deadlines
               </p>
             </div>
-            {unreadCount > 0 && (
-              <button className="btn-outline btn-small" onClick={markAllAsReadHandler}>Mark all as read ({unreadCount})</button>
+            {notifications.length > 0 && (
+              <button className="btn-outline btn-small" onClick={markAllAsReadHandler}>
+                Mark all as read{unreadCount > 0 ? ` (${unreadCount})` : ""}
+              </button>
             )}
           </div>
         </div>
@@ -166,38 +173,44 @@ const NotificationsPage = () => {
         {/* NOTIFICATIONS LIST */}
         <div className="space-y-3">
           {
-            notifications.map(notifications => {
+            notifications.map((notification) => {
               return (
-                <div key={notifications._id} className={`border border-slate-200 rounded-lg p-4 transition-all duration-200 border-1 ${getPriorityColor(notifications.priority)} ${!notifications.isRead ? "bg-blue-50" : "bg-white hover:bg-slate-50"}`}>
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0 mt-1">
-                      {getNotificationIcon(notifications.type)}
+                <div key={notification._id} className={`relative flex gap-4 rounded-2xl border p-4 transition-all ${!notification.isRead ? "bg-blue-50 border-blue-200" : "bg-white border-slate-200 hover:bg-slate-50"}`}>
+                  <div className="flex items-start gap-4 w-full">
+                    <div className="flex-shrink-0 mt-1 p-3 rounded-full bg-slate-100 text-slate-700">
+                      {getNotificationIcon(notification.type)}
                     </div>
-                    <div className="flex min-w-0">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className={`font-medium ${!notifications.isRead ? "text-slate-900" : "text-slate-700"}`}>{notifications.title} {!notifications.isRead && (<span className="ml-2 w-2 h-2 bg-blue-50 rounded-full inline-block" />)}</h3>
 
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-slate-500">
-                            {formateDate(notifications.createdAt)}
-                          </span>
-                          <span className={`badge capitalize ${notifications.priority === "high" ? "badge-rejected" : notifications.priority === "medium" ? "badge-pendig" : "badge-approved"}`}>{notifications.priority}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-3 mb-2">
+                        <div className="min-w-0">
+                          <h3 className={`text-base font-semibold ${!notification.isRead ? "text-slate-900" : "text-slate-700"}`}>
+                            {notification.title}
+                            {!notification.isRead && (
+                              <span className="ml-2 inline-flex h-2.5 w-2.5 rounded-full bg-blue-500" />
+                            )}
+                          </h3>
                         </div>
+                        <p className="text-sm text-slate-500">
+                          {formateDate(notification.createdAt)}
+                        </p>
                       </div>
 
-                      <p className="text-slate-600 text-sm leading-relaxed mb-3">{notifications.message}</p>
+                      <p className="text-slate-600 text-sm leading-relaxed mb-4">
+                        {notification.message}
+                      </p>
 
-                      <div className="flex items-center justify-between">
-                        <span className={`badge capitalize ${notifications.type === "feedback" ? "bg-blue-100 text-blue-100" : notifications.type === "deadline" ? "bg-red-100 text-red-800" : notifications.type === "approval" ? "bg-green-100 text-green-800" : notifications.type === "meeting" ? "bg-purple-100 text-purple-800" : "bg-gray-100 text-gray-800"}`}>
-                          {notifications.type}
+                      <div className="flex items-center justify-between gap-4 flex-wrap">
+                        <span className={`badge px-3 py-1 text-xs font-semibold capitalize ${getTypeBadgeClasses(notification.type)}`}>
+                          {notification.type}
                         </span>
-                        <div className="flex items-center space-x-2">
-                          {!notifications.isRead && (
-                            <button className="text-sm txt-blue-600 hover:text-blue-500" onClick={() => markAsReadHandler(notifications._id)}>
+                        <div className="flex items-center gap-3">
+                          {!notification.isRead && (
+                            <button className="text-sm text-blue-600 hover:text-blue-500 transition-colors" onClick={() => markAsReadHandler(notification._id)}>
                               Mark as read
                             </button>
                           )}
-                          <button className="text-sm text-red-600 hover:text-red-500" onClick={() => deleteNotificationHandler(notifications._id)}>
+                          <button className="text-sm text-red-600 hover:text-red-500 transition-colors" onClick={() => deleteNotificationHandler(notification._id)}>
                             Delete
                           </button>
                         </div>

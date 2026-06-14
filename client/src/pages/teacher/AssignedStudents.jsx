@@ -114,7 +114,7 @@ const AssignedStudents = () => {
     {
       label: "In Progress",
       value: sortedStudents.filter(
-        (s) => s.project?.status === "in_progress"
+        (s) => s.project?.status === "approved"
       ).length,
       bg: "bg-yellow-50",
       labelClass: "text-yellow-700",

@@ -18,7 +18,7 @@ const StudentDashboard = () => {
   const supervisorName = dashboardStats?.supervisorName || "N/A";
   const upcomingDeadlines = dashboardStats?.upcomingDeadlines || [];
   const topNotifications = dashboardStats?.topNotifications || [];
-  const feedbackList = dashboardStats?.feedbackList?.slice(-2).reverse() || [];
+  const feedbackList = dashboardStats?.feedbackNotifications?.slice(-2).reverse() || [];
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "N/A";
@@ -119,7 +119,19 @@ const StudentDashboard = () => {
 
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-slate-600">Status</label>
-              <span className={`inline-flex items-center px-2 py-[2px] rounded-full text-sm font-medium capitalize ${project?.status === "approved" ? "bg-green-100 text-green-800" : project?.status === "pending" ? "bg-yellow-100 text-yellow-800" : project?.status === "rejected" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"}`}>{project?.status || "Unknown"}</span>
+              <span className={`inline-flex items-center px-2 py-[2px] rounded-full text-sm font-medium capitalize 
+                ${project?.status === "approved"
+                  ? "bg-green-100 text-green-800"
+                  : project?.status === "pending"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : project?.status === "rejected"
+                      ? "bg-red-100 text-red-800"
+                      : project?.status === "completed"
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-gray-100 text-gray-800"}`}
+              >
+                {project?.status || "Unknown"}
+              </span>
             </div>
 
             <div>
@@ -191,7 +203,7 @@ const StudentDashboard = () => {
                       <p className="font-medium text-slate-800">{d.title}</p>
                       <p className="font-sm text-slate-600">{formatDate(d.deadline)}</p>
                     </div>
-                    <div className={`badge badge-pending`}>upcoming</div>
+                    <div className={`badge badge-pending capitalize font-bold`}>upcoming</div>
                   </div>
                 )
               })}
@@ -224,17 +236,17 @@ const StudentDashboard = () => {
                     })
                   }
                 </div>
-              ): (
-                <div className = "text-center py-8">
-                <Bell className = "w-10 h-10 text-slate-300 mx-auto mb-3"/>
-            <p className="text-slate-500 text-sm">No notification yet.</p>
-          </div>
-          )
+              ) : (
+                <div className="text-center py-8">
+                  <Bell className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                  <p className="text-slate-500 text-sm">No notification yet.</p>
+                </div>
+              )
             }
+          </div>
         </div>
       </div>
-    </div>
-  </div >
+    </div >
 
   </>;
 };

@@ -18,6 +18,14 @@ export const createDeadline = asyncHandler(async (req, res, next) => {
         return next(new ErrorHandler("project not found", 404));
     }
 
+    if(!project.status === "completed"){
+        return next(new ErrorHandler("Project is already completed", 404));
+    }
+
+    if(!project.status === "approved"){
+        return next(new ErrorHandler("Project is not approved", 404));
+    }
+
     const deadlineData = {
         name,
         dueDate: new Date(dueDate),

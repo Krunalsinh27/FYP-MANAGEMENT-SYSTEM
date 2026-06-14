@@ -236,6 +236,8 @@ export const getFiles = asyncHandler(async (req, res, next) => {
         }))
     );
 
+    const total = allFiles.length;
+
     res.status(200).json({
         success: true,
         message: "File fetched",
@@ -244,4 +246,20 @@ export const getFiles = asyncHandler(async (req, res, next) => {
             total,
         },
     });
+});
+
+
+export const downloadFile = asyncHandler(async(req, res, next) => {
+    const { projectId, fileId } = req.params;
+    const supervisorId = req.user._id;
+
+    const project = await projectServices.getProjectById(projectId);
+    if(!project) return next(new ErrorHandler("Project not found", 404));
+    if(project.supervisor._id.toString() !== supervisorId.toString()){
+        return next(new ErrorHandler("Not authorized to download file", 403))
+    }
+    const file = project.files.id(fileId);
+    if(!file) return next(new ErrorHandler("File not found", 404));
+
+    fileServices.streamDownload(file.fileUrl, res, file.originalName);
 });

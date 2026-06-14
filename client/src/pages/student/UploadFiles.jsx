@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { downloadFile, fetchProject, uploadFiles } from "../../store/slices/studentSlice";
+import { fetchProject, uploadFiles } from "../../store/slices/studentSlice";
+import { axiosInstance } from "../../lib/axios";
 import { Archive, File, FileText, FileCode, FilePlus } from "lucide-react";
 
 const UploadFiles = () => {
@@ -17,7 +18,7 @@ const UploadFiles = () => {
     if (!project) {
       dispatch(fetchProject())
     }
-  }, [dispatch]);
+  }, [dispatch, project]);
 
   const handleFilePick = (e) => {
     const list = Array.from(e.target.files || []);
@@ -52,24 +53,19 @@ const UploadFiles = () => {
   const handleDownloadFile = async (file) => {
     if(!file?._id) return;
     try {
-      const res = await dispatch(
-        downloadFile({ projectId: project._id, fileId: file._id })
-      );
-      if(res.type === "downloadfile/fulfilled") {
-        const { blob } = res.payload;
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.setAttribute("download", file.originalName || "download");
-        document.body.appendChild(link);
-        link.click();
-        link.parentNode.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      } else {
-        toast.error(res.payload || "Failed to download file");
-      }
+      const res = await axiosInstance.get(`/student/download/${project._id}/${file._id}`, { responseType: "blob" });
+      const blob = res.data;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", file.originalName || "download");
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success("File downloaded successfully");
     } catch (error) {
-      toast.error("Failed to download file");
+      toast.error(error?.response?.data?.message || "Failed to download file");
     }
   }
 

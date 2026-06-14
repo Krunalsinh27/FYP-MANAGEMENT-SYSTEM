@@ -3,7 +3,7 @@ import { axiosInstance } from "../../lib/axios";
 import { toast } from "react-toastify";
 // import { createDeadline } from "./deadlineSlice";
 
-export const createStudent = createAsyncThunk("createStudent", async(data, thunkApi) => {
+export const createStudent = createAsyncThunk("createStudent", async (data, thunkApi) => {
   try {
     const res = await axiosInstance.post("/admin/create-student", data);
     toast.success(res.data.message || "Student created successfully");
@@ -14,7 +14,7 @@ export const createStudent = createAsyncThunk("createStudent", async(data, thunk
   }
 });
 
-export const updateStudent = createAsyncThunk("updateStudent", async({id, data}, thunkApi) => {
+export const updateStudent = createAsyncThunk("updateStudent", async ({ id, data }, thunkApi) => {
   try {
     const res = await axiosInstance.put(`/admin/update-student/${id}`, data);
     toast.success(res.data.message || "Student updated successfully");
@@ -25,7 +25,7 @@ export const updateStudent = createAsyncThunk("updateStudent", async({id, data},
   }
 });
 
-export const deleteStudent = createAsyncThunk("deleteStudent", async(id, thunkApi) => {
+export const deleteStudent = createAsyncThunk("deleteStudent", async (id, thunkApi) => {
   try {
     const res = await axiosInstance.delete(`/admin/delete-student/${id}`);
     toast.success(res.data.message || "Student deleted successfully");
@@ -36,7 +36,7 @@ export const deleteStudent = createAsyncThunk("deleteStudent", async(id, thunkAp
   }
 });
 
-export const createTeacher = createAsyncThunk("createTeacher", async(data, thunkApi) => {
+export const createTeacher = createAsyncThunk("createTeacher", async (data, thunkApi) => {
   try {
     const res = await axiosInstance.post("/admin/create-teacher", data);
     toast.success(res.data.message || "Teacher created successfully");
@@ -47,7 +47,7 @@ export const createTeacher = createAsyncThunk("createTeacher", async(data, thunk
   }
 });
 
-export const updateTeacher = createAsyncThunk("updateTeacher", async({id, data}, thunkApi) => {
+export const updateTeacher = createAsyncThunk("updateTeacher", async ({ id, data }, thunkApi) => {
   try {
     const res = await axiosInstance.put(`/admin/update-teacher/${id}`, data);
     toast.success(res.data.message || "Teacher updated successfully");
@@ -58,7 +58,7 @@ export const updateTeacher = createAsyncThunk("updateTeacher", async({id, data},
   }
 });
 
-export const deleteTeacher = createAsyncThunk("deleteTeacher", async(id, thunkApi) => {
+export const deleteTeacher = createAsyncThunk("deleteTeacher", async (id, thunkApi) => {
   try {
     const res = await axiosInstance.delete(`/admin/delete-teacher/${id}`);
     toast.success(res.data.message || "Teacher deleted successfully");
@@ -69,7 +69,7 @@ export const deleteTeacher = createAsyncThunk("deleteTeacher", async(id, thunkAp
   }
 });
 
-export const getAllUsers = createAsyncThunk("getAllUsers", async(_, thunkApi) => {
+export const getAllUsers = createAsyncThunk("getAllUsers", async (_, thunkApi) => {
   try {
     const res = await axiosInstance.get(`/admin/users`);
     return res.data.data.users;
@@ -79,7 +79,7 @@ export const getAllUsers = createAsyncThunk("getAllUsers", async(_, thunkApi) =>
   }
 });
 
-export const getAllProjects = createAsyncThunk("getAllProjects", async(_, thunkApi) => {
+export const getAllProjects = createAsyncThunk("getAllProjects", async (_, thunkApi) => {
   try {
     const res = await axiosInstance.get(`/admin/projects`);
     return res.data.data;
@@ -89,7 +89,7 @@ export const getAllProjects = createAsyncThunk("getAllProjects", async(_, thunkA
   }
 });
 
-export const getDashboardStats = createAsyncThunk("getDashboardStats", async(_, thunkApi) => {
+export const getDashboardStats = createAsyncThunk("getDashboardStats", async (_, thunkApi) => {
   try {
     const res = await axiosInstance.get(`/admin/fetch-dashboard-stats`);
     return res.data.data.stats;
@@ -113,6 +113,47 @@ export const assignSupervisor = createAsyncThunk(
   }
 );
 
+export const approveProject = createAsyncThunk(
+  "approveProject",
+  async (id, thunkAPI) => {
+    try {
+      const res = await axiosInstance.put(`/admin/project/${id}`, { status: "approved" })
+      toast.success(res.data.message || "Project approved successfully");
+      return id;
+    } catch (error) {
+      toast.error(error.response.data.message || "Failed to approve project");
+      return thunkAPI.rejectWithValue(error.response.data.message);
+    }
+  }
+);
+
+export const rejectProject = createAsyncThunk(
+  "rejectProject",
+  async (id, thunkAPI) => {
+    try {
+      const res = await axiosInstance.put(`/admin/project/${id}`, { status: "rejected" });
+      toast.success(res.data.message || "Project rejected successfully");
+      return id;
+    } catch (error) {
+      toast.error(error.response.data.message || "Failed to reject project");
+      return thunkAPI.rejectWithValue(error.response.data.message);
+    }
+  }
+);
+
+export const getProject = createAsyncThunk(
+  "rejectProject",
+  async (id, thunkAPI) => {
+    try {
+      const res = await axiosInstance.get(`/admin/project/${id}`);
+      return res.data?.data?.project || res.data.data || res.data;
+    } catch (error) {
+      toast.error(error.response.data.message || "Failed to fetch project");
+      return thunkAPI.rejectWithValue(error.response.data.message);
+    }
+  }
+);
+
 const adminSlice = createSlice({
   name: "admin",
   initialState: {
@@ -127,47 +168,61 @@ const adminSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-    .addCase(createStudent.fulfilled, (state, action) => {
-      if(state.users) state.users.unshift(action.payload);
-    })
-    .addCase(updateStudent.fulfilled, (state, action) => {
-      if(state.users){
-        state.users = state.users.map((u) => 
-          u._id === action.payload._id ? { ...u, ...action.payload } : u
+      .addCase(createStudent.fulfilled, (state, action) => {
+        if (state.users) state.users.unshift(action.payload);
+      })
+      .addCase(updateStudent.fulfilled, (state, action) => {
+        if (state.users) {
+          state.users = state.users.map((u) =>
+            u._id === action.payload._id ? { ...u, ...action.payload } : u
+          );
+        }
+      })
+      .addCase(createStudent.rejected, (state, action) => {
+        if (state.users) state.users = state.users.filter((u) => u._id !== action.payload);
+      })
+      .addCase(getAllUsers.fulfilled, (state, action) => {
+        state.users = action.payload;
+      })
+      .addCase(getAllProjects.fulfilled, (state, action) => {
+        state.projects = action.payload.projects;
+      })
+      .addCase(createTeacher.fulfilled, (state, action) => {
+        if (state.users) state.users.unshift(action.payload);
+      })
+      .addCase(updateTeacher.fulfilled, (state, action) => {
+        if (state.users) {
+          state.users = state.users.map((u) =>
+            u._id === action.payload._id ? { ...u, ...action.payload } : u
+          );
+        }
+      })
+      .addCase(createTeacher.rejected, (state, action) => {
+        if (state.users) state.users = state.users.filter((u) => u._id !== action.payload);
+      })
+      .addCase(deleteStudent.fulfilled, (state, action) => {
+        if (state.users) state.users = state.users.filter((u) => u._id !== action.payload);
+      })
+      .addCase(deleteTeacher.fulfilled, (state, action) => {
+        if (state.users) state.users = state.users.filter((u) => u._id !== action.payload);
+      })
+      .addCase(getDashboardStats.fulfilled, (state, action) => {
+        state.stats = action.payload;
+      })
+      .addCase(approveProject.fulfilled, (state, action) => {
+        const projectId = action.payload;
+
+        state.projects = state.projects.map((p) =>
+          p._id === projectId ? { ...p, status: "approved" } : p
         );
-      }
-    })
-    .addCase(createStudent.rejected, (state, action) => {
-      if(state.users) state.users = state.users.filter((u) => u._id !== action.payload);
-    })
-    .addCase(getAllUsers.fulfilled, (state, action) => {
-      state.users = action.payload;
-    })
-    .addCase(getAllProjects.fulfilled, (state, action) => {
-      state.projects = action.payload.projects;
-    })
-    .addCase(createTeacher.fulfilled, (state, action) => {
-      if(state.users) state.users.unshift(action.payload);
-    })
-    .addCase(updateTeacher.fulfilled, (state, action) => {
-      if(state.users){
-        state.users = state.users.map((u) => 
-          u._id === action.payload._id ? { ...u, ...action.payload } : u
+      })
+      .addCase(rejectProject.fulfilled, (state, action) => {
+        const projectId = action.payload;
+
+        state.projects = state.projects.map((p) =>
+          p._id === projectId ? { ...p, status: "rejected" } : p
         );
-      }
-    })
-    .addCase(createTeacher.rejected, (state, action) => {
-      if(state.users) state.users = state.users.filter((u) => u._id !== action.payload);
-    })
-    .addCase(deleteStudent.fulfilled, (state, action) => {
-      if(state.users) state.users = state.users.filter((u) => u._id !== action.payload);
-    })
-    .addCase(deleteTeacher.fulfilled, (state, action) => {
-      if(state.users) state.users = state.users.filter((u) => u._id !== action.payload);
-    })
-    .addCase(getDashboardStats.fulfilled, (state, action) => {
-      state.stats = action.payload;
-    })
+      });
   },
 });
 

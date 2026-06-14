@@ -87,5 +87,25 @@ export const addFeedback = async (
 };
 
 export const getProjectsBySupervisor = async (supervisorId) => {
-    return await getAllProjects({ supervisor})
+    return await Project.find({ supervisor: supervisorId })
+        .populate("student", "name email")
+        .populate("supervisor", "name email")
+        .sort({ createdAt: -1 });
+};
+
+// Backward-compatible alias used by some controllers
+export const getProjectBySupervisor = async (supervisorId) => {
+    return await getProjectsBySupervisor(supervisorId);
+};
+
+export const updateProject = async (id, updatedData) => {
+    const project = await Project.findByIdAndUpdate(id, updatedData, {
+        new: true,
+        runValidators: true,
+    }).populate("student", "name email").populate("supervisor", "name email");
+
+    if(!project) {
+        throw new ErrorHandler("Project not found", 404);
+    }
+    return project;
 };
