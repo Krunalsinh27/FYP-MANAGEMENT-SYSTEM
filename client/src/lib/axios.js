@@ -4,9 +4,8 @@ import axios from "axios";
 // const apiBase = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL ||  || "http://localhost:5000";
 
 export const axiosInstance = axios.create({
-  // baseURL: import.meta.env.FRONTEND_URL,
-  baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: true,
+    baseURL: `${import.meta.env.VITE_API_URL}/api/v1`,
+    withCredentials: true,
 });
 
 // if (!import.meta.env.VITE_API_URL && !import.meta.env.VITE_BACKEND_URL && !import.meta.env.FRONTEND_URL) {

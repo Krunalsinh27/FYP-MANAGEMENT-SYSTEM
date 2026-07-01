@@ -17,7 +17,7 @@ export const login = createAsyncThunk("login", async(data, thunkAPI) => {
 
 export const forgotPassword = createAsyncThunk("auth/password/forgot", async(email, thunkAPI) => {
   try {
-    const res = await axiosInstance.post("/api/v1/auth/password/forgot", email);
+    const res = await axiosInstance.post("/api/auth/password/forgot", email);
     toast.success(res.data.message);
     return null;
   } catch (error) {
@@ -28,7 +28,7 @@ export const forgotPassword = createAsyncThunk("auth/password/forgot", async(ema
 
 export const resetPassword = createAsyncThunk("auth/password/reset", async({token, password, confirmPassword}, thunkAPI) => {
   try {
-    const res = await axiosInstance.put(`/api/v1/auth/password/reset/${token}`, {password, confirmPassword});
+    const res = await axiosInstance.put(`/api/auth/password/reset/${token}`, {password, confirmPassword});
     toast.success(res.data.message);
     return res.data.user;
   } catch (error) {
@@ -40,7 +40,7 @@ export const resetPassword = createAsyncThunk("auth/password/reset", async({toke
 
 export const getUser = createAsyncThunk("auth/me", async(_, thunkAPI) => {
   try {
-    const res = await axiosInstance.get(`/api/v1/auth/me`);
+    const res = await axiosInstance.get(`/api/auth/me`);
     return res.data.user;
   } catch (error) {
     const message = error?.response?.data?.message || error?.message || "Failed to fetch current user";
@@ -50,7 +50,7 @@ export const getUser = createAsyncThunk("auth/me", async(_, thunkAPI) => {
 
 export const logout = createAsyncThunk("auth/logout", async(_, thunkAPI) => {
   try {
-    const res = await axiosInstance.get(`/api/v1/auth/logout`);
+    const res = await axiosInstance.get(`/api/auth/logout`);
     return null;
   } catch (error) {
     toast.error(error.response.data.message || "Failed to logout");
