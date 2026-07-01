@@ -43,6 +43,12 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "FYP Management System Backend is Running 🚀",
+  });
+});
 
 const uploadsDir = path.join(__dirname, "uploads");
 const tempDir = path.join(__dirname, "temp");
