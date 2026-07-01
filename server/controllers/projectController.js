@@ -30,5 +30,11 @@ export const downloadFile = asyncHandler(async(req, res, next) => {
         return next(new ErrorHandler("File not found", 404));
     }
 
-    fileServices.streamDownload(file.fileUrl, res, file.originalName);
+    return res.status(200).json({
+        success: true,
+        fileUrl: file.fileUrl,
+        originalName: file.originalName,
+    });
+
+    // fileServices.streamDownload(file.fileUrl, res, file.originalName);
 });

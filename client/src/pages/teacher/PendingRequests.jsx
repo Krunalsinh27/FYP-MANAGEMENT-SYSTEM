@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { acceptRequest, getTeacherRequests, rejectRequest } from "../../store/slices/teacherSlice";
+import { acceptRequest, getTeacherRequests, rejectRequest, getAssignedStudents, getFiles } from "../../store/slices/teacherSlice";
 import { FileText } from "lucide-react"
 
 const PendingRequests = () => {
@@ -29,6 +29,8 @@ const PendingRequests = () => {
 
     try {
       await dispatch(acceptRequest(id)).unwrap();
+      dispatch(getAssignedStudents());
+      dispatch(getFiles());
     } finally {
       setLoading(id, "accepting", false);
     }

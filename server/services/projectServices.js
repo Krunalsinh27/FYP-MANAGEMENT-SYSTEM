@@ -18,7 +18,7 @@ export const getProjectById = async (id) => {
     const project = await Project.findById(id).populate("student", "name email").populate("supervisor", "name email").populate("feedback.supervisorId", "name email");
 
     if (!project) {
-        throw new Error("Project not found", 400);
+        throw new ErrorHandler("Project not found", 404);
     }
     return project;
 };
@@ -29,10 +29,11 @@ export const addFilesToProject = async (projectId, files) => {
     if (!project) {
         throw new ErrorHandler("Project not found", 400);
     }
+
     const fileMetadata = files.map(file => ({
-        fileType: file.mimetype,
-        fileUrl: file.path,
-        originalName: file.originalname,
+        fileType: file.fileType,
+        fileUrl: file.secure_url || file.fileUrl,
+        originalName: file.originalName,
         uploadedAt: new Date(),
     }));
     project.files.push(...fileMetadata);

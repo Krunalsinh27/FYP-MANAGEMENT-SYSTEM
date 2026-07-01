@@ -1,3 +1,264 @@
+// import { asyncHandler } from "../middlewares/asyncHandler.js";
+// import ErrorHandler from "../middlewares/error.js";
+// import { User } from "../models/user.js";
+// import * as userServices from "../services/userServices.js";
+// import * as projectServices from "../services/projectServices.js";
+// import * as requestService from "../services/requestServices.js";
+// import * as notificationServices from "../services/notificationServices.js";
+// import { Project } from "../models/project.js";
+// import { Notification } from "../models/notification.js";
+// import * as fileServices from "../services/fileServices.js";
+// import cloudinary from "../config/cloudinary.js";
+
+
+// export const getStudentProject = asyncHandler(async (req, res, next) =>{
+//     const studentId = req.user._id;
+
+//     const project = await projectServices.getProjectByStudentId(studentId);
+
+//     if(!project){
+//         return res.status(200).json({
+//             success: true,
+//             data: { project: null },
+//             message: "No project found for the student"
+//         });
+//     }
+//     res.status(200).json({
+//         success: true,
+//         data: { project },
+//     });
+// });
+
+// export const submitProposal = asyncHandler(async (req, res, next) => {
+//     const {title, description} = req.body;
+//     const studentId = req.user._id;
+
+//     const existingProject = await projectServices.getProjectByStudentId(studentId);
+
+//     if (existingProject && existingProject.status !== "rejected") {
+//         return next(new ErrorHandler("You already have an active project. You can only submit a new proposal if the previous one was rejected.", 400));
+//     }
+
+//     if(existingProject && existingProject.status === "rejected"){
+//         await Project.findByIdAndDelete(existingProject._id);
+//     }
+
+//     const projectData = {
+//         student: studentId,
+//         title,
+//         description,
+//     };
+
+//     const project = await projectServices.createProject(projectData);
+
+//     await User.findByIdAndUpdate(studentId, { project: project._id });
+
+//     res.status(201).json({
+//         success: true,
+//         data: { project },
+//         message: "Project proposal submitted successfully"
+//     });
+// });
+
+// export const uploadFiles = asyncHandler(async (req, res, next) => {
+//     const { projectId } = req.params;
+//     const studentId = req.user._id;
+//     const project = await projectServices.getProjectById(projectId);
+
+//     if(!project || project.student._id.toString() !== studentId.toString() || project.status === "rejected"){
+//         return next(new ErrorHandler("Not authorized to upload files for this project", 403));
+//     }
+//     if(!req.files || req.files.length === 0){
+//         return next(new ErrorHandler("No files uploaded", 400));
+//     }
+
+//     const uploadedFiles = [];
+//     for(let file of req.files){
+//         const result = await cloudinary.uploader.upload(file.path, {
+//             folder: `projects/${projectId}`,
+//             resource_type: "auto",
+//         });
+//         uploadedFiles.push({
+//             fileType: file.mimetype,
+//             fileUrl: result.secure_url,
+//             originalName: file.originalname,
+//         });
+//     }
+
+
+//     // const uploadedFiles = req.files.map(file => ({
+//     //     fileType: file.mimetype,
+//     //     fileUrl: file.path,
+//     //     originalName: file.originalname,
+//     // }));
+
+//     // const updatedProject = await projectServices.addFilesToProject(projectId, uploadedFiles);
+
+//     const updatedProject = await projectServices.addFilesToProject(
+//         projectId,
+//         uploadedFiles
+//     );
+    
+//     res.status(200).json({
+//         success: true,
+//         message: "Files uploaded successfully",
+//         data: { project: updatedProject },
+//     });
+// });
+
+// export const getAvailableSupervisors = asyncHandler(async (req, res, next) => {
+//     const supervisors = await User.find({ role: "Teacher"}).select("name email department expertise").lean();
+//     res.status(200).json({
+//         success: true,
+//         data: { supervisors },
+//         message: "Available supervisors fetched successfully",
+//     });
+// });
+
+// export const getSupervisor = asyncHandler(async (req, res, next) => {
+//     const studentId = req.user._id;
+//     const student = await User.findById(studentId).populate("supervisor", "name email department expertise");
+
+//     if(!student.supervisor){
+//         return res.status(200).json({
+//             success: true,
+//             data: { supervisor: null},
+//             message: "No supervisor assigned yet",
+//         });
+//     }
+//     res.status(200).json({
+//         success: true,
+//         data: { supervisor: student.supervisor},
+//     });
+// });
+
+// export const requestSupervisor = asyncHandler(async(req, res, next) => {
+//     const {teacherId, message} = req.body;
+//     const studentId = req.user._id;
+
+//     const student = await User.findById(studentId);
+//     if(student.supervisor){
+//         return next(new ErrorHandler("You already have a supervisor assigned.", 400));
+//     }
+
+//     const supervisor = await User.findById(teacherId);
+//     if(!supervisor || supervisor.role !== "Teacher"){
+//         return next(new ErrorHandler("Invalid supervisor selected.", 400));
+//     }
+
+//     if(supervisor.maxStudents === supervisor.assignedStudents.length){
+//         return next(new ErrorHandler("Selected supervisor has reached maximum student capacity.",400));
+//     }
+
+//     const requestData = {
+//         student: studentId,
+//         supervisor: teacherId,
+//         message,
+//     };
+
+//     const request = await requestService.createRequest(requestData);
+
+//     await notificationServices.notifyUser(
+//         teacherId,
+//         `${student.name} has request ${supervisor.name} to be their supervisor.`,
+//         "request",
+//         "/teacher/requests",
+//         "medium"
+//     );
+    
+//     res.status(201).json({
+//         success: true,
+//         data: { request },
+//         message: "Supervisor request submitted successfully",
+//     })
+// });
+
+// export const getDashboardState = asyncHandler(async(req, res, next) => {
+//     const studentId = req.user._id;
+
+//     const project = await Project.findOne({student: studentId}).sort({createdAt: -1}).populate("supervisor", "name").lean();
+
+//     const now = new Date();
+//     const upcomingDeadlines = await Project.find({
+//         student: studentId,
+//         deadline: {$gte: now},
+//     })
+//         .select("title description deadline")
+//         .sort({createdAt: 1})
+//         .limit(3)
+//         .lean();
+
+//     const topNotifications = await Notification.find({user: studentId}).populate("user", "name").sort({createdAt: -1}).limit(3).lean();
+//     const feedbackNotifications = project?.feedback && project?.feedback.length > 0 ? project.feedback.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 2) : [];
+
+//     const supervisorName = project?.supervisor?.name || null;
+
+//     res.status(200).json({
+//         success: true,
+//         message: "Dashboard stats fetched successfully",
+//         data: {
+//             project,
+//             upcomingDeadlines,
+//             topNotifications,
+//             feedbackNotifications,
+//             supervisorName,
+//         }
+//     })
+
+// });
+
+// export const getFeedback = asyncHandler(async(req, res, next) => {
+//     const { projectId } = req.params;
+//     const studentId = req.user._id;
+
+//     const project = await projectServices.getProjectById(projectId);
+
+//     // project.student may be populated (object) or just an id; handle both
+//     const projectStudentId = project?.student?._id ? project.student._id.toString() : project?.student?.toString();
+
+//     if (!project || projectStudentId !== studentId.toString()) {
+//         return next(new ErrorHandler("Not authorized to view feedback for this project", 403));
+//     }
+
+//     const sortedFeedback = (project.feedback || [])
+//         .slice()
+//         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+//         .map((f) => ({
+//             _id: f._id,
+//             title: f.title,
+//             message: f.message,
+//             type: f.type,
+//             createdAt: f.createdAt,
+//             supervisorName: f.supervisorId?.name || null,
+//             supervisorEmail: f.supervisorId?.email || null,
+//         }));
+
+//     res.status(200).json({
+//         success: true,
+//         data: { feedback: sortedFeedback },
+//     });
+// });
+
+// export const downloadFile = asyncHandler(async(req, res, next) => {
+//     const { projectId, fileId } = req.params;
+//     const studentId = req.user._id;
+
+//     const project = await projectServices.getProjectById(projectId);
+//     if(!project) return next(new ErrorHandler("Project not found", 404));
+//     if(project.student._id.toString() !== studentId.toString()){
+//         return next(new ErrorHandler("Not authorized to download file", 403))
+//     }
+//     const file = project.files.id(fileId);
+//     if(!file) return next(new ErrorHandler("File not found", 404));
+
+//     return res.status(200).json({
+//         succes: true,
+//         fileUrl: file.fileUrl,
+//         originalName: file.originalName,
+//     });
+
+//     // fileServices.streamDownload(file.fileUrl, res, file.originalName);
+// });
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 import ErrorHandler from "../middlewares/error.js";
 import { User } from "../models/user.js";
@@ -8,6 +269,8 @@ import * as notificationServices from "../services/notificationServices.js";
 import { Project } from "../models/project.js";
 import { Notification } from "../models/notification.js";
 import * as fileServices from "../services/fileServices.js";
+import fs from "fs";
+import cloudinary from "../config/cloudinary.js";
 
 
 export const getStudentProject = asyncHandler(async (req, res, next) =>{
@@ -60,18 +323,82 @@ export const submitProposal = asyncHandler(async (req, res, next) => {
 });
 
 export const uploadFiles = asyncHandler(async (req, res, next) => {
-    const {projectId} = req.params;
+    const { projectId } = req.params;
     const studentId = req.user._id;
+
+    console.log("UploadFiles request:", {
+        route: req.originalUrl,
+        method: req.method,
+        studentId: studentId.toString(),
+        userRole: req.user.role,
+        projectId,
+        fileCount: req.files?.length || 0,
+        cookie: req.headers.cookie,
+        contentType: req.headers["content-type"],
+    });
+
     const project = await projectServices.getProjectById(projectId);
 
-    if(!project || project.student._id.toString() !== studentId.toString() || project.status === "rejected"){
+    const projectStudentId = project?.student?._id
+        ? project.student._id.toString()
+        : project?.student?.toString();
+
+    console.log("Project ownership check:", {
+        projectExists: !!project,
+        projectStudentId,
+        studentId: studentId.toString(),
+        status: project?.status,
+    });
+
+    if (!project || projectStudentId !== studentId.toString() || project.status === "rejected") {
         return next(new ErrorHandler("Not authorized to upload files for this project", 403));
     }
-    if(!req.files || req.files.length === 0){
+    if (!req.files || req.files.length === 0) {
         return next(new ErrorHandler("No files uploaded", 400));
     }
-    const updatedProject = await projectServices.addFilesToProject(projectId, req.files);
-    
+
+    console.log("Upload file paths:", req.files.map((file) => ({ originalname: file.originalname, path: file.path, mimetype: file.mimetype })));
+
+    const uploadedFiles = [];
+    try {
+        for (const file of req.files) {
+            const safePublicId = `${Date.now()}-${file.originalname.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_\.-]/g, "_")}`;
+            const result = await cloudinary.uploader.upload(file.path, {
+                folder: `projects/${projectId}`,
+                resource_type: "auto",
+                public_id: safePublicId,
+            });
+
+            uploadedFiles.push({
+                fileType: file.mimetype,
+                fileUrl: result.secure_url,
+                originalName: file.originalname,
+            });
+
+            if (fs.existsSync(file.path)) {
+                fs.unlinkSync(file.path);
+            }
+        }
+    } catch (error) {
+        console.error("Cloudinary upload error:", {
+            message: error.message,
+            name: error.name,
+            http_code: error.http_code,
+            request_id: error.request_id,
+            status: error.status,
+            details: error.http_body || error,
+        });
+
+        for (const file of req.files) {
+            if (fs.existsSync(file.path)) {
+                fs.unlinkSync(file.path);
+            }
+        }
+        return next(new ErrorHandler(error.message || "Cloudinary upload failed", 500));
+    }
+
+    const updatedProject = await projectServices.addFilesToProject(projectId, uploadedFiles);
+
     res.status(200).json({
         success: true,
         message: "Files uploaded successfully",
@@ -185,9 +512,9 @@ export const getFeedback = asyncHandler(async(req, res, next) => {
     const studentId = req.user._id;
 
     const project = await projectServices.getProjectById(projectId);
-
-    // project.student may be populated (object) or just an id; handle both
-    const projectStudentId = project?.student?._id ? project.student._id.toString() : project?.student?.toString();
+    const projectStudentId = project?.student?._id
+        ? project.student._id.toString()
+        : project?.student?.toString();
 
     if (!project || projectStudentId !== studentId.toString()) {
         return next(new ErrorHandler("Not authorized to view feedback for this project", 403));
@@ -218,11 +545,22 @@ export const downloadFile = asyncHandler(async(req, res, next) => {
 
     const project = await projectServices.getProjectById(projectId);
     if(!project) return next(new ErrorHandler("Project not found", 404));
-    if(project.student._id.toString() !== studentId.toString()){
-        return next(new ErrorHandler("Not authorized to download file", 403))
+
+    const projectStudentId = project?.student?._id
+        ? project.student._id.toString()
+        : project?.student?.toString();
+
+    if(projectStudentId !== studentId.toString()){
+        return next(new ErrorHandler("Not authorized to download file", 403));
     }
     const file = project.files.id(fileId);
     if(!file) return next(new ErrorHandler("File not found", 404));
 
-    fileServices.streamDownload(file.fileUrl, res, file.originalName);
+    return res.status(200).json({
+        success: true,
+        fileUrl: file.fileUrl,
+        originalName: file.originalName,
+    });
+
+    // fileServices.streamDownload(file.fileUrl, res, file.originalName);
 });

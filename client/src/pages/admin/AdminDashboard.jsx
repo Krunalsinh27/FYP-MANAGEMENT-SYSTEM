@@ -15,16 +15,16 @@ import AddTeacher from "../../components/modal/AddTeacher";
 import { toast } from "react-toastify";
 import { getDashboardStats, getAllProjects } from "../../store/slices/adminSlice";
 import { getNotifications } from "../../store/slices/notificationSlice";
-import { axiosInstance } from "../../lib/axios";
+// import { axiosInstance } from "../../lib/axios";
 import { AlertCircle, Box, User, Folder, AlertTriangle, PlusIcon, FileTextIcon, X } from "lucide-react";
 import { toggleStudentModal, toggleTeacherModal } from "../../store/slices/popupSlice";
+import { downloadProjectFile } from "../../store/slices/projectSlice";
 
 const AdminDashboard = () => {
 
   const { isCreateStudentModalOpen, isCreateTeacherModalOpen } = useSelector((state) => state.popup);
 
   const { stats, projects } = useSelector((state) => state.admin);
-  // const {  } = useSelector((state) => state.project);
   const notifications = useSelector((state) => state.notification.list);
 
   const dispatch = useDispatch();
@@ -67,21 +67,56 @@ const AdminDashboard = () => {
     (f.studentName || "").toLowerCase().includes(reportSearch.toLowerCase())
   );
 
+  // const handleDownload = async (projectId, fileId, name) => {
+  //   try {
+  //     const res = await axiosInstance.get(`/project/${projectId}/files/${fileId}/download`, { responseType: "blob" });
+  //     const blob = res.data;
+  //     const url = window.URL.createObjectURL(blob);
+  //     const link = document.createElement("a");
+  //     link.href = url;
+  //     link.setAttribute("download", name || "download");
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     link.parentNode.removeChild(link);
+  //     window.URL.revokeObjectURL(url);
+  //     toast.success("File downloaded successfully");
+  //   } catch (error) {
+  //     toast.error(error?.response?.data?.message || "Failed to download file");
+  //   }
+  // };
+
+  // const downloadRemoteFile = async (fileUrl, fileName) => {
+  //   if (!fileUrl) throw new Error("File URL not available");
+  //   try {
+  //     const response = await fetch(fileUrl);
+  //     if (!response.ok) {
+  //       throw new Error("Failed to fetch file");
+  //     }
+  //     const blob = await response.blob();
+  //     const url = window.URL.createObjectURL(blob);
+  //     const link = document.createElement("a");
+  //     link.href = url;
+  //     link.setAttribute("download", fileName || "download");
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     document.body.removeChild(link);
+  //     window.URL.revokeObjectURL(url);
+  //   } catch {
+  //     window.open(fileUrl, "_blank", "noopener,noreferrer");
+  //   }
+  // };
+
   const handleDownload = async (projectId, fileId, name) => {
     try {
-      const res = await axiosInstance.get(`/project/${projectId}/files/${fileId}/download`, { responseType: "blob" });
-      const blob = res.data;
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", name || "download");
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      toast.success("File downloaded successfully");
+      const res = await dispatch(
+        downloadProjectFile({ projectId, fileId }),
+      ).unwrap();
+      const fileUrl = res?.fileUrl;
+      window.open(fileUrl, "_blank");
+      // await downloadRemoteFile(fileUrl, name || "download");
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to download file");
+      console.log("Error downloading file:", error);
+      toast.error("Failed to download file. Please try again.");
     }
   };
 

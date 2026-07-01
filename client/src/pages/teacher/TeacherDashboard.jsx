@@ -1,23 +1,23 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getTeacherDashboardStats } from "../../store/slices/teacherSlice";
+import { getTeacherDashboardStats, getAssignedStudents } from "../../store/slices/teacherSlice";
 import { CheckCircle, Clock, Loader, MoveDiagonal, User, Users } from "lucide-react";
 
 const TeacherDashboard = () => {
 
   const dispatch = useDispatch();
 
-  const { dashboardStats, loading } = useSelector((state) => state.teacher);
-  const { authUser } = useSelector(state => state.auth);
+  const { dashboardStats, loading, assignedStudents } = useSelector((state) => state.teacher);
 
   useEffect(() => {
-    dispatch(getTeacherDashboardStats())
+    dispatch(getTeacherDashboardStats());
+    dispatch(getAssignedStudents());
   }, [dispatch]);
 
   const statsCards = [
     {
       title: "Assigned Students",
-      value: authUser?.assignedStudents?.length || 0,
+      value: assignedStudents?.length || 0,
       loading,
       Icon: Users,
       bg: "bg-slate-600",

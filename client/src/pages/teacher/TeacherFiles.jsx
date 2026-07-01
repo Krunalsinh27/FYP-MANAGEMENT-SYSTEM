@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { ArrowDownToLine, File, FileArchive, FileSpreadsheet, FileText, Layout, List } from "lucide-react";
-import { getFiles } from "../../store/slices/teacherSlice";
+import { downloadTeacherFile, getFiles } from "../../store/slices/teacherSlice";
 import { toast } from "react-toastify";
-import { axiosInstance } from "../../lib/axios";
+// import { axiosInstance } from "../../lib/axios";
 
 const TeacherFiles = () => {
   const [viewMode, setViewMode] = useState("grid");
@@ -89,25 +89,61 @@ const TeacherFiles = () => {
     return matchesSearch && matchesType;
   });
 
+  // const handleDownloadFile = async (file) => {
+  //   if (!file?.fileId) return;
+  //   try {
+  //     const res = await axiosInstance.get(
+  //       `/teacher/download/${file.projectId}/${file.fileId}`,
+  //       { responseType: "blob" }
+  //     );
+  //     const blob = res.data;
+  //     const url = window.URL.createObjectURL(blob);
+  //     const link = document.createElement("a");
+  //     link.href = url;
+  //     link.setAttribute("download", file.name || "download");
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     link.parentNode.removeChild(link);
+  //     window.URL.revokeObjectURL(url);
+  //     toast.success("File downloaded successfully");
+  //   } catch (error) {
+  //     toast.error(error.response?.data?.message || "Failed to download file");
+  //   }
+  // };
+
+  // const downloadRemoteFile = async (fileUrl, fileName) => {
+  //   if (!fileUrl) throw new Error("File URL not available");
+  //   try {
+  //     const response = await fetch(fileUrl);
+  //     if (!response.ok) {
+  //       throw new Error("Failed to fetch file");
+  //     }
+  //     const blob = await response.blob();
+  //     const url = window.URL.createObjectURL(blob);
+  //     const link = document.createElement("a");
+  //     link.href = url;
+  //     link.setAttribute("download", fileName || "download");
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     document.body.removeChild(link);
+  //     window.URL.revokeObjectURL(url);
+  //   } catch {
+  //     window.open(fileUrl, "_blank", "noopener,noreferrer");
+  //   }
+  // };
+
   const handleDownloadFile = async (file) => {
-    if (!file?.fileId) return;
+    if (!file) return;
     try {
-      const res = await axiosInstance.get(
-        `/teacher/download/${file.projectId}/${file.fileId}`,
-        { responseType: "blob" }
-      );
-      const blob = res.data;
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", file.name || "download");
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      toast.success("File downloaded successfully");
+      const res = await dispatch(
+        downloadTeacherFile({ projectId: file.projectId, fileId: file.id })
+      ).unwrap();
+      const fileUrl = res?.fileUrl || file.fileUrl;
+      window.open(fileUrl, '_blank');
+      // await downloadRemoteFile(fileUrl, file.name || file.originalName || "download");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to download file");
+      console.log("Error downloading file:", error);
+      toast.error("Failed to download file. Please try again.");
     }
   };
 
@@ -171,26 +207,26 @@ const TeacherFiles = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-        <div className="flex items-center gap-4">
-          <select className="input w-56" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-            <option value="all">All Files</option>
-            <option value="report">Report</option>
-            <option value="presentation">Presentation</option>
-            <option value="code">Code</option>
-            <option value="image">Images</option>
-          </select>
+          <div className="flex items-center gap-4">
+            <select className="input w-56" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+              <option value="all">All Files</option>
+              <option value="report">Report</option>
+              <option value="presentation">Presentation</option>
+              <option value="code">Code</option>
+              <option value="image">Images</option>
+            </select>
 
-          <input type="text" className="input w-96" placeholder="Search files..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-        </div>
+            <input type="text" className="input w-96" placeholder="Search files..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          </div>
 
-        <div className="flex items-center gap-2">
-          <button onClick={() => setViewMode("grid")} className={`p-2 rounded-lg ${viewMode === "grid" ? "bg-blue-100 text-blue-600" : "hover:bg-slate-100 text-slate-600"}`}><Layout className="w-5 h-5"/></button>
-          <button onClick={()=> setViewMode("list")} className={`p-2 rounded-lg ${viewMode === "list" ? "bg-blue-100 text-blue-600" : "hover:bg-slate-100 text-slate-600"}`}><List className="w-5 h-5"/></button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setViewMode("grid")} className={`p-2 rounded-lg ${viewMode === "grid" ? "bg-blue-100 text-blue-600" : "hover:bg-slate-100 text-slate-600"}`}><Layout className="w-5 h-5" /></button>
+            <button onClick={() => setViewMode("list")} className={`p-2 rounded-lg ${viewMode === "list" ? "bg-blue-100 text-blue-600" : "hover:bg-slate-100 text-slate-600"}`}><List className="w-5 h-5" /></button>
+          </div>
         </div>
-      </div>
-      {/* FILE STATS */}
+        {/* FILE STATS */}
         <div className="grid grid-cols-1 sm:grid-cols-5 gap-5 mb-6">
-          {fileStats.map((item, i)=>{
+          {fileStats.map((item, i) => {
             return (
               <div key={i} className={`${item.bg} p-4 rounded-lg`}>
                 <p className={`text-sm ${item.text}`}>{item.label}</p>
@@ -218,7 +254,7 @@ const TeacherFiles = () => {
                     <p className="text-xs text-slate-500 mb-4">{new Date(file.uploadDate).toLocaleDateString()}</p>
 
                     <div className="flex gap-2 w-full">
-                      <button onClick={()=> handleDownloadFile(file)} className="rounded-lg text-white bg-[#3b82f6] text-lg font-medium w-full flex items-center justify-center py-3 gap-3 hover:bg-blue-700 duration-300 transition-all"><ArrowDownToLine size={22}/>Download</button>
+                      <button onClick={() => handleDownloadFile(file)} className="rounded-lg text-white bg-[#3b82f6] text-lg font-medium w-full flex items-center justify-center py-3 gap-3 hover:bg-blue-700 duration-300 transition-all"><ArrowDownToLine size={22} />Download</button>
                     </div>
                   </div>
                 </div>
@@ -233,7 +269,7 @@ const TeacherFiles = () => {
                   {
                     tableHeadData.map((t) => {
                       return (
-                        <th className="py-3 px-4 text-left font-semibold">{t}</th>
+                        <th key={t} className="py-3 px-4 text-left font-semibold">{t}</th>
                       );
                     })}
                 </tr>
@@ -242,7 +278,7 @@ const TeacherFiles = () => {
               <tbody>
                 {
                   filteredFiles.map(file => {
-                    return(
+                    return (
                       <tr key={file.id} className="border-t hover:bg-slate-50 transition-colors">
                         <td>{getFileIcon(file.type)} <span className="font-medium">{file.name}</span></td>
                         <td className="py-3 px-4">{file.name}</td>
@@ -258,7 +294,7 @@ const TeacherFiles = () => {
           </div>
         )
       }
-      
+
 
 
     </div>

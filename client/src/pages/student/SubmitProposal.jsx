@@ -2,23 +2,26 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { submitProjectProposal } from "../../store/slices/studentSlice";
 
+const initialFormData = {
+  title: "",
+  description: "",
+};
+
 const SubmitProposal = () => {
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-  })
+  const [formData, setFormData] = useState(initialFormData);
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value});
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) =>{
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await dispatch(submitProjectProposal(formData));
+      await dispatch(submitProjectProposal(formData)).unwrap();
+      setFormData(initialFormData);
     } catch (error) {
       // no-op: error handling happens in the async thunk
     } finally {

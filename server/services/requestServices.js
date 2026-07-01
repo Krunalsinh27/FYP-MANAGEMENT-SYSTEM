@@ -1,4 +1,6 @@
 import { SupervisorRequest } from "../models/supervisorRequest.js";
+import * as projectServices from "./projectServices.js";
+import * as userServices from "./userServices.js";
 
 export const createRequest = async (requestData) => {
     const existingRequest = await SupervisorRequest.findOne({
@@ -39,6 +41,16 @@ export const acceptRequest = async (requestId, supervisorId) => {
     if (request.status !== "pending") {
         throw new Error("Request has already been processed");
     }
+
+    const { student, supervisor } = await userServices.assignSupervisorDirectly(request.student._id, request.supervisor._id);
+
+    const project = await projectServices.getProjectByStudentId(student._id);
+    if (!project) {
+        throw new Error("Project not found for the student");
+    }
+
+    project.supervisor = supervisor._id;
+    await project.save();
 
     request.status = "accepted";
     await request.save();

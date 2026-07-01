@@ -57,20 +57,38 @@ const ProjectsPage = () => {
     (file.studentName || "").toLowerCase().includes(reportSearch.toLowerCase())
   );
 
+  const downloadRemoteFile = async (fileUrl, fileName) => {
+    if (!fileUrl) throw new Error("File URL not available");
+    try {
+      const response = await fetch(fileUrl);
+      if (!response.ok) {
+        throw new Error("Failed to fetch file");
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", fileName || "download");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (fetchError) {
+      window.open(fileUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
   const handleDownloadFile = async (file) => {
+    try {
       const res = await dispatch(
         downloadProjectFile({ projectId: file.projectId, fileId: file.fileId })
-      ).then((res) => {
-        const { blob } = res.payload;
-        const url = window.URL.createObjectURL(new Blob([blob]));
-        const link = document.createElement("a");
-        link.href = url;
-        link.setAttribute("download", file.originalName || "download");
-        document.body.appendChild(link);
-        link.click();
-        link.parentNode.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      });
+      ).unwrap();
+      const fileUrl = res?.fileUrl;
+      await downloadRemoteFile(fileUrl, file.originalName || "download");
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      toast.error("Failed to download file. Please try again.");
+    }
   };
 
   const getStatusColor = (status) => {

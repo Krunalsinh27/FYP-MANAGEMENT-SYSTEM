@@ -57,13 +57,9 @@ export const markComplete = createAsyncThunk("markComplete", async (projectId, t
 
 export const downloadTeacherFile = createAsyncThunk("downloadTeacherFile", async ({ projectId, fileId }, thunkAPI) => {
   try {
-    await axiosInstance.get(`/teacher/download/${projectId}/${fileId}`,
-      {
-        responseType: "blob",
-      }
-    );
+    const res = await axiosInstance.get(`/teacher/download/${projectId}/${fileId}`,);
     // Return only serializable data, not the blob
-    return {projectId, fileId, success: true}
+    return res.data;
   } catch (error) {
     toast.error(error.response?.data?.message || "Failed to download file");
       return thunkAPI.rejectWithValue(error.response?.data?.message);
@@ -97,7 +93,7 @@ export const addFeedback = createAsyncThunk("addFeedback", async ({ projectId, p
 export const getAssignedStudents = createAsyncThunk("getAssignedStudents", async (_, thunkAPI) => {
   try {
     const res = await axiosInstance.get(`/teacher/assigned-students`);
-    return res.data.data?.student || res.data.data || res.data;
+    return res.data.data?.students || res.data.data || [];
 
   } catch (error) {
     toast.error(error.response?.data?.message || "Failed to fetch assigned student");
