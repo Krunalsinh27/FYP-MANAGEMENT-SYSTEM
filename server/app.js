@@ -3,7 +3,8 @@ import cors from "cors";
 import { config } from "dotenv";
 import cookieParser from "cookie-parser";
 import { errorMiddleware } from "./middlewares/error.js";
-import authRouter from "./router/userRoutes.js";
+// import authRouter from "./router/userRoutes.js";
+import authRouter from "./router/authRoutes.js";
 import adminRouter from "./router/adminRoutes.js";
 import studentRouter from "./router/studentRoutes.js";
 import notificationRouter from "./router/notificationRoutes.js";
@@ -21,28 +22,35 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-const allowedOrigins = [process.env.FRONTEND_URL].filter(Boolean);
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://fyp-management-system-n0s8.onrender.com"
+].filter(Boolean);
 
 const corsOptions = {
     origin: (origin, callback) => {
-        if (!origin) return callback(null, true); // allow non-browser requests like curl
-        // allow configured frontend origin
+        if (!origin) return callback(null, true);
         if (allowedOrigins.includes(origin)) return callback(null, true);
-        // allow any localhost or 127.0.0.1 origin on any port for development
         try {
             const url = new URL(origin);
-            if ((url.hostname === 'localhost' || url.hostname === '127.0.0.1')) return callback(null, true);
+            if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+                return callback(null, true);
+            }
         } catch (err) {
-            // ignore parse errors
+            // ignore
         }
-        return callback(new Error('CORS policy: Origin not allowed'));
+        return callback(null, false);
     },
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+    optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.get("/", (req, res) => {
   res.json({
     success: true,

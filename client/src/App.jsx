@@ -6,6 +6,9 @@ import LoginPage from "./pages/auth/LoginPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 
+import StudentRegistrationPage from "./pages/auth/StudentRegistrationPage";
+import TeacherRegistrationPage from "./pages/auth/TeacherRegistrationPage";
+
 // Dashboard Layouts
 import DashboardLayout from "./components/layout/DashboardLayout";
 
@@ -30,6 +33,7 @@ import ManageTeachers from "./pages/admin/ManageTeachers";
 import AssignSupervisor from "./pages/admin/AssignSupervisor";
 import DeadlinesPage from "./pages/admin/DeadlinesPage";
 import ProjectsPage from "./pages/admin/ProjectsPage";
+import PendingUsersPage from "./pages/admin/PendingUsersPage";
 import NotFound from "./pages/NotFound";
 import { useDispatch, useSelector } from "react-redux";
 import { ToastContainer } from "react-toastify";
@@ -84,10 +88,15 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
 
+        <Route path="/register/student" element={<StudentRegistrationPage />} />
+        <Route path="/register/teacher" element={<TeacherRegistrationPage />} />
+
+
         {/* Auth Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="pending-users" element={<PendingUsersPage />} />
 
         {/* Admin Routes */}
         <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]}><DashboardLayout userRole="Admin" /></ProtectedRoute>}>
