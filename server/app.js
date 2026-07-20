@@ -11,7 +11,7 @@ import notificationRouter from "./router/notificationRoutes.js";
 import projectRouter from "./router/projectRoutes.js";
 import deadlineRouter from "./router/deadlineRoutes.js";
 import teacherRouter from "./router/teacherRoutes.js";
-import {fileURLToPath} from "url";
+import { fileURLToPath } from "url";
 import path from "path";
 import fs from "fs";
 
@@ -30,27 +30,26 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 const corsOptions = {
-    origin: (origin, callback) => {
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin)) return callback(null, true);
-        try {
-            const url = new URL(origin);
-            if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
-                return callback(null, true);
-            }
-        } catch (err) {
-            // ignore
-        }
-        return callback(null, false);
-    },
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
-    optionsSuccessStatus: 200
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    try {
+      const url = new URL(origin);
+      if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+        return callback(null, true);
+      }
+    } catch (err) {
+      // ignore
+    }
+    return callback(null, false);
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
 app.get("/", (req, res) => {
   res.json({
     success: true,
@@ -61,8 +60,8 @@ app.get("/", (req, res) => {
 const uploadsDir = path.join(__dirname, "uploads");
 const tempDir = path.join(__dirname, "temp");
 
-if(!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, {recursive: true});
-if(!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, {recursive: true});
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
 
 app.use(cookieParser());
 app.use(express.json());
