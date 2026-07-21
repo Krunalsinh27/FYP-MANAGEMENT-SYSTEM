@@ -157,13 +157,19 @@ const LoginPage = () => {
             )}
           </div>
 
-          {/* Forgot Password Link */}
-          <div className="text-right">
+          {/* Links Row */}
+          <div className="flex items-center justify-between text-sm">
             <Link 
               to={"/forgot-password"} 
-              className="text-sm text-blue-600 hover:text-blue-500" 
+              className="text-blue-600 hover:text-blue-500 font-medium" 
             >
               Forgot Password?
+            </Link>
+            <Link 
+              to={formData.email ? `/verify-email?email=${encodeURIComponent(formData.email)}` : "/verify-email"} 
+              className="text-indigo-600 hover:text-indigo-500 font-medium" 
+            >
+              Verify Email / Enter OTP
             </Link>
           </div>
 
@@ -179,6 +185,20 @@ const LoginPage = () => {
           }
           </button>
           </form>
+
+          {/* Registration Navigation Footer */}
+          <div className="mt-6 pt-6 border-t border-slate-200 text-center space-y-2">
+            <p className="text-sm text-slate-600">Don't have an account?</p>
+            <div className="flex justify-center gap-4 text-sm font-medium">
+              <Link to="/register/student" className="text-blue-600 hover:text-blue-700">
+                Register as Student
+              </Link>
+              <span className="text-slate-300">|</span>
+              <Link to="/register/teacher" className="text-purple-600 hover:text-purple-700">
+                Register as Teacher
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>

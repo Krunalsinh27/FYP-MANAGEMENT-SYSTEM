@@ -1,14 +1,9 @@
 import axios from "axios";
 
-
-// const apiBase = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL ||  || "http://localhost:5000";
+const rawApiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const cleanApiUrl = rawApiUrl.replace(/\/+$/, "");
 
 export const axiosInstance = axios.create({
-    baseURL: `${import.meta.env.VITE_API_URL}/api/v1`,
+    baseURL: `${cleanApiUrl}/api/v1`,
     withCredentials: true,
 });
-
-// if (!import.meta.env.VITE_API_URL && !import.meta.env.VITE_BACKEND_URL && !import.meta.env.FRONTEND_URL) {
-//   // eslint-disable-next-line no-console
-//   console.warn(`axios baseURL fallback in use (${apiBase}). Set VITE_API_URL in your .env to point to the backend.`);
-// }

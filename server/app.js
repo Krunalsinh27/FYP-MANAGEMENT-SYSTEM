@@ -23,19 +23,28 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 const allowedOrigins = [
-  process.env.FRONTEND_URL,
+  process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/+$/, "") : null,
   "http://localhost:5173",
   "http://127.0.0.1:5173",
-  "https://fyp-management-system-n0s8.onrender.com"
+  "http://localhost:3000",
 ].filter(Boolean);
 
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
+    const cleanOrigin = origin.replace(/\/+$/, "");
+    if (allowedOrigins.includes(cleanOrigin)) return callback(null, true);
+
     try {
       const url = new URL(origin);
-      if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+      const host = url.hostname;
+
+      if (
+        host === 'localhost' ||
+        host === '127.0.0.1' ||
+        host.endsWith('.vercel.app') ||
+        host.endsWith('.onrender.com')
+      ) {
         return callback(null, true);
       }
     } catch (err) {
@@ -53,7 +62,7 @@ app.use(cors(corsOptions));
 app.get("/", (req, res) => {
   res.json({
     success: true,
-    message: "FYP Management System Backend is Running 🚀",
+    message: "FYP Management System Backend is Running",
   });
 });
 

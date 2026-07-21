@@ -1,77 +1,16 @@
-// import { asyncHandler } from "../middlewares/asyncHandler.js";
-// import ErrorHandler from "../middlewares/error.js";
-// import { User } from "../models/user.js";
-// import { sendEmail } from "../services/emailService.js";
-// import { generateForgotPasswordEmailTemplate } from "../utils/emailTemplates.js";
-// import { generateToken } from "../utils/generateToken.js";
-// import crypto from "crypto";
-
-// // REGISTER USER
-// export const registerUser = asyncHandler(async (req, res, next) => {
-//     const { name, email, password, role } = req.body;
-//     if (!name || !email || !password || !role) {
-//         return next(new ErrorHandler("Please enter all required fields.", 400));
-//     }
-//     let user = await User.findOne({ email });
-//     if (user) {
-//         return next(new ErrorHandler("User already exists.", 400));
-//     }
-//     user = new User({ name, email, password, role });
-//     await user.save();
-//     generateToken(user, 201, "User registered successfully.", res);
-// });
-
-// export const loginUser = asyncHandler(async (req, res, next) => {
-//     const { email, password, role } = req.body;
-//     if (!email || !password || !role) {
-//         return next(new ErrorHandler("Please enter all required fields.", 400));
-//     }
-//     const user = await User.findOne({ email }).select("+password");
-//     if (!user) {
-//         return next(new ErrorHandler("Invalid email, password or role.", 401));
-//     }
-//     if (user.role.toLowerCase() !== role.toLowerCase()) {
-//         return res.status(401).json({
-//             success: false,
-//             message: "Invalid role"
-//         });
-//     }
-//     const isPasswordMatched = await user.comparePassword(password);
-//     if (!isPasswordMatched) {
-//         return next(new ErrorHandler("Invalid email, password or role.", 401));
-//     }
-//     generateToken(user, 200, "logged in successfully.", res);
-// });
-
-// export const logout = asyncHandler(async (req, res, next) => {
-//     const isProd = process.env.NODE_ENV === 'production';
-//     res.status(200).cookie("token", "", {
-//         expires: new Date(Date.now()),
-//         httpOnly: true,
-//         sameSite: 'none',
-//         secure: isProd,
-//         path: '/',
-//     }).json({
-//         success: true,
-//         message: "Logged out successfully.",
-//     });
-// });
-
-// export const getUser = asyncHandler(async (req, res, next) => {
-//     const user = req.user;
-//     res.status(200).json({
-//         success: true,
-//         user,
-//     });
-// });
-
-
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 import ErrorHandler from "../middlewares/error.js";
 import { User } from "../models/user.js";
 import { sendEmail } from "../services/emailService.js";
-import { generateForgotPasswordEmailTemplate } from "../utils/emailTemplates.js";
+import { generateForgotPasswordEmailTemplate, generateOTPEmailTemplate } from "../utils/emailTemplates.js";
+import { generateToken } from "../utils/generateToken.js";
+import { verifyOTPHash } from "../utils/otpHelper.js";
 import crypto from "crypto";
+
+const getFrontendUrl = () => {
+    const url = process.env.FRONTEND_URL || "http://localhost:5173";
+    return url.replace(/\/+$/, "");
+};
 
 // Register Student
 export const registerStudent = asyncHandler(async (req, res, next) => {
@@ -114,7 +53,7 @@ export const registerStudent = asyncHandler(async (req, res, next) => {
     }
 
     // Create user
-    const user = await User.create({
+    const user = new User({
         name,
         enrollmentNumber,
         email,
@@ -123,50 +62,48 @@ export const registerStudent = asyncHandler(async (req, res, next) => {
         semester,
         mobileNumber,
         role: "Student",
-        accountStatus: "pending",
+        isEmailVerified: false,
     });
 
-    // Generate email verification token
-    const verificationToken = user.getEmailVerificationToken();
+    // Generate 6-digit OTP
+    const otp = user.generateOTP();
     await user.save();
 
-    // Send verification email
-    const verificationUrl = `${req.protocol}://${req.get("host")}/api/v1/auth/verify-email/${verificationToken}`;
-    const message = `
-        <h1>Welcome to FYP Management System</h1>
-        <p>Hello ${name},</p>
-        <p>Thank you for registering! Please verify your email by clicking the link below:</p>
-        <a href="${verificationUrl}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a>
-        <p>This link will expire in 24 hours.</p>
-        <p>If you did not create an account, please ignore this email.</p>
-    `;
+    // Verification URL pointing to frontend /verify-email page
+    const verificationUrl = `${getFrontendUrl()}/verify-email?email=${encodeURIComponent(user.email)}`;
+    const message = generateOTPEmailTemplate({
+        name: user.name,
+        otp,
+        verificationUrl,
+    });
 
     try {
         await sendEmail({
             to: user.email,
-            subject: "Email Verification - FYP Management System",
+            subject: "Email Verification OTP - FYP Management System",
             message,
         });
 
         res.status(201).json({
             success: true,
-            message: "Registration successful! Please check your email for verification link.",
+            message: "Registration successful! A 6-digit OTP has been sent to your email.",
             data: {
+                email: user.email,
                 user: {
                     id: user._id,
                     name: user.name,
                     email: user.email,
                     role: user.role,
-                    accountStatus: user.accountStatus,
+                    isEmailVerified: user.isEmailVerified,
                 }
             }
         });
     } catch (error) {
-        user.emailVerificationToken = undefined;
-        user.emailVerificationExpire = undefined;
+        user.otpHash = undefined;
+        user.otpExpire = undefined;
         await user.save();
 
-        return next(new ErrorHandler("Email could not be sent. Please contact support.", 500));
+        return next(new ErrorHandler("Verification email could not be sent. Please check your email address.", 500));
     }
 });
 
@@ -212,7 +149,7 @@ export const registerTeacher = asyncHandler(async (req, res, next) => {
     }
 
     // Create user
-    const user = await User.create({
+    const user = new User({
         name,
         employeeId,
         email,
@@ -222,132 +159,201 @@ export const registerTeacher = asyncHandler(async (req, res, next) => {
         mobileNumber,
         expertise: Array.isArray(expertise) ? expertise : [],
         role: "Teacher",
-        accountStatus: "pending",
+        isEmailVerified: false,
         maxStudents: 10,
     });
 
-    // Generate email verification token
-    const verificationToken = user.getEmailVerificationToken();
+    // Generate 6-digit OTP
+    const otp = user.generateOTP();
     await user.save();
 
-    // Send verification email
-    const verificationUrl = `${req.protocol}://${req.get("host")}/api/v1/auth/verify-email/${verificationToken}`;
-    const message = `
-        <h1>Welcome to FYP Management System</h1>
-        <p>Hello ${name},</p>
-        <p>Thank you for registering as a Teacher! Please verify your email by clicking the link below:</p>
-        <a href="${verificationUrl}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a>
-        <p>This link will expire in 24 hours.</p>
-        <p>Your account is pending admin approval. You will be notified once approved.</p>
-        <p>If you did not create an account, please ignore this email.</p>
-    `;
+    // Verification URL pointing to frontend /verify-email page
+    const verificationUrl = `${getFrontendUrl()}/verify-email?email=${encodeURIComponent(user.email)}`;
+    const message = generateOTPEmailTemplate({
+        name: user.name,
+        otp,
+        verificationUrl,
+    });
 
     try {
         await sendEmail({
             to: user.email,
-            subject: "Email Verification - FYP Management System",
+            subject: "Email Verification OTP - FYP Management System",
             message,
         });
 
         res.status(201).json({
             success: true,
-            message: "Registration successful! Please check your email for verification link.",
+            message: "Registration successful! A 6-digit OTP has been sent to your email.",
             data: {
+                email: user.email,
                 user: {
                     id: user._id,
                     name: user.name,
                     email: user.email,
                     role: user.role,
-                    accountStatus: user.accountStatus,
+                    isEmailVerified: user.isEmailVerified,
                 }
             }
         });
     } catch (error) {
-        user.emailVerificationToken = undefined;
-        user.emailVerificationExpire = undefined;
+        user.otpHash = undefined;
+        user.otpExpire = undefined;
         await user.save();
 
-        return next(new ErrorHandler("Email could not be sent. Please contact support.", 500));
+        return next(new ErrorHandler("Verification email could not be sent. Please check your email address.", 500));
     }
 });
 
-// Verify Email
-export const verifyEmail = asyncHandler(async (req, res, next) => {
-    const { token } = req.params;
+// Verify OTP
+export const verifyOTP = asyncHandler(async (req, res, next) => {
+    const { email, otp } = req.body;
 
-    const emailVerificationToken = crypto.createHash("sha256").update(token).digest("hex");
-
-    const user = await User.findOne({
-        emailVerificationToken,
-        emailVerificationExpire: { $gt: Date.now() },
-    });
-
-    if (!user) {
-        return next(new ErrorHandler("Invalid or expired verification token", 400));
+    if (!email || !otp) {
+        return next(new ErrorHandler("Please provide email and 6-digit OTP", 400));
     }
 
-    user.isEmailVerified = true;
-    user.emailVerificationToken = undefined;
-    user.emailVerificationExpire = undefined;
-    await user.save();
-
-    res.status(200).json({
-        success: true,
-        message: "Email verified successfully! You can now login after admin approval.",
-    });
-});
-
-// Resend Verification Email
-export const resendVerificationEmail = asyncHandler(async (req, res, next) => {
-    const { email } = req.body;
-
-    if (!email) {
-        return next(new ErrorHandler("Please provide email", 400));
+    const cleanOtp = otp.toString().trim();
+    if (cleanOtp.length !== 6 || !/^\d{6}$/.test(cleanOtp)) {
+        return next(new ErrorHandler("OTP must be a 6-digit number", 400));
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select("+otpHash");
 
     if (!user) {
         return next(new ErrorHandler("User not found", 404));
     }
 
-    if (user.isEmailVerified) {
-        return next(new ErrorHandler("Email already verified", 400));
+    if (user.role === "Admin") {
+        return next(new ErrorHandler("Admin accounts do not require email verification", 400));
     }
 
-    // Generate new verification token
-    const verificationToken = user.getEmailVerificationToken();
+    if (user.isEmailVerified) {
+        return next(new ErrorHandler("Email is already verified. You can log in.", 400));
+    }
+
+    if (!user.otpHash || !user.otpExpire) {
+        return next(new ErrorHandler("No active OTP found. Please request a new OTP.", 400));
+    }
+
+    // Expiry check
+    if (Date.now() > user.otpExpire) {
+        return next(new ErrorHandler("OTP has expired. Please request a new OTP.", 400));
+    }
+
+    // Max 5 attempts check
+    if (user.otpAttempts >= 5) {
+        return next(new ErrorHandler("Maximum verification attempts exceeded (5/5). Please request a new OTP.", 400));
+    }
+
+    // Verify OTP Hash
+    const isMatch = verifyOTPHash(cleanOtp, user.otpHash);
+
+    if (!isMatch) {
+        user.otpAttempts += 1;
+        await user.save();
+
+        const attemptsLeft = 5 - user.otpAttempts;
+        if (attemptsLeft <= 0) {
+            return next(new ErrorHandler("Maximum verification attempts reached. Please request a new OTP.", 400));
+        }
+        return next(new ErrorHandler(`Invalid OTP. ${attemptsLeft} attempt(s) remaining.`, 400));
+    }
+
+    // Successful OTP verification
+    user.isEmailVerified = true;
+    user.otpHash = undefined;
+    user.otpExpire = undefined;
+    user.otpAttempts = 0;
+    user.otpResendCount = 0;
+    user.otpResendLastAt = undefined;
     await user.save();
 
-    // Send verification email
-    const verificationUrl = `${req.protocol}://${req.get("host")}/api/v1/auth/verify-email/${verificationToken}`;
-    const message = `
-        <h1>Email Verification</h1>
-        <p>Hello ${user.name},</p>
-        <p>Please verify your email by clicking the link below:</p>
-        <a href="${verificationUrl}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a>
-        <p>This link will expire in 24 hours.</p>
-    `;
+    res.status(200).json({
+        success: true,
+        message: "Email verified successfully! You can now log in immediately.",
+    });
+});
+
+// Legacy Endpoint Alias for Link Verification
+export const verifyEmail = asyncHandler(async (req, res, next) => {
+    // If token passed in params, redirect frontend to /verify-email
+    return res.status(200).json({
+        success: true,
+        message: "Please enter your 6-digit OTP on the verification page.",
+    });
+});
+
+// Resend OTP
+export const resendOTP = asyncHandler(async (req, res, next) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return next(new ErrorHandler("Please provide email address", 400));
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        return next(new ErrorHandler("User not found with this email", 404));
+    }
+
+    if (user.role === "Admin") {
+        return next(new ErrorHandler("Admin accounts do not require email verification", 400));
+    }
+
+    if (user.isEmailVerified) {
+        return next(new ErrorHandler("Email is already verified. You can log in.", 400));
+    }
+
+    // 60-Second Cooldown Rate Limiting
+    if (user.otpResendLastAt && (Date.now() - new Date(user.otpResendLastAt).getTime() < 60 * 1000)) {
+        const secondsLeft = Math.ceil((60000 - (Date.now() - new Date(user.otpResendLastAt).getTime())) / 1000);
+        return next(new ErrorHandler(`Please wait ${secondsLeft} second(s) before requesting another OTP.`, 429));
+    }
+
+    // Reset resend count if OTP expired
+    if (user.otpExpire && Date.now() > user.otpExpire) {
+        user.otpResendCount = 0;
+    }
+
+    // Max 3 resend attempts per session
+    if (user.otpResendCount >= 3) {
+        return next(new ErrorHandler("Maximum OTP resend limit reached (3/3). Please wait until current OTP expires (10 mins) or try again later.", 429));
+    }
+
+    // Generate new OTP
+    const otp = user.generateOTP();
+    user.otpResendCount = (user.otpResendCount || 0) + 1;
+    user.otpResendLastAt = new Date();
+    await user.save();
+
+    const verificationUrl = `${getFrontendUrl()}/verify-email?email=${encodeURIComponent(user.email)}`;
+    const message = generateOTPEmailTemplate({
+        name: user.name,
+        otp,
+        verificationUrl,
+    });
 
     try {
         await sendEmail({
             to: user.email,
-            subject: "Email Verification - FYP Management System",
+            subject: "New Email Verification OTP - FYP Management System",
             message,
         });
 
         res.status(200).json({
             success: true,
-            message: "Verification email sent successfully!",
+            message: "A new 6-digit OTP has been sent to your email address.",
         });
     } catch (error) {
-        user.emailVerificationToken = undefined;
-        user.emailVerificationExpire = undefined;
-        await user.save();
-
-        return next(new ErrorHandler("Email could not be sent", 500));
+        return next(new ErrorHandler("Failed to send OTP email. Please try again later.", 500));
     }
 });
+
+// Send OTP (alias for resendOTP)
+export const sendOTP = resendOTP;
+export const resendVerificationEmail = resendOTP;
 
 // Login
 export const login = asyncHandler(async (req, res, next) => {
@@ -369,47 +375,13 @@ export const login = asyncHandler(async (req, res, next) => {
         return next(new ErrorHandler("Invalid credentials", 401));
     }
 
-    // Check email verification
-    if (!user.isEmailVerified) {
+    // Check email verification: Admin skips email verification; Student and Teacher require email verification
+    if (user.role !== "Admin" && !user.isEmailVerified) {
         return next(new ErrorHandler("Please verify your email before logging in", 403));
     }
 
-    // Check account status
-    if (user.accountStatus === "pending") {
-        return next(new ErrorHandler("Your account is pending admin approval", 403));
-    }
-
-    if (user.accountStatus === "rejected") {
-        return next(new ErrorHandler(`Your account has been rejected. Reason: ${user.rejectionReason || "Not specified"}`, 403));
-    }
-
-    if (user.accountStatus === "suspended") {
-        return next(new ErrorHandler("Your account has been suspended. Please contact admin.", 403));
-    }
-
-    const token = user.generateToken();
-
-    res.status(200)
-        .cookie("token", token, {
-            expires: new Date(Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000),
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-        })
-        .json({
-            success: true,
-            message: "Login successful",
-            data: {
-                user: {
-                    id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    role: user.role,
-                    accountStatus: user.accountStatus,
-                },
-                token,
-            },
-        });
+    // Generate token & set cookie (NO admin approval checks)
+    generateToken(user, 200, "Logged in successfully", res);
 });
 
 // Get Current User
@@ -421,15 +393,20 @@ export const getMe = asyncHandler(async (req, res, next) => {
     res.status(200).json({
         success: true,
         data: { user },
+        user,
     });
 });
 
 // Logout
 export const logout = asyncHandler(async (req, res, next) => {
+    const isProd = process.env.NODE_ENV === "production";
     res.status(200)
         .cookie("token", "", {
             expires: new Date(0),
             httpOnly: true,
+            sameSite: isProd ? "none" : "lax",
+            secure: isProd,
+            path: "/",
         })
         .json({
             success: true,
@@ -437,20 +414,23 @@ export const logout = asyncHandler(async (req, res, next) => {
         });
 });
 
+// Forgot Password
 export const forgotPassword = asyncHandler(async (req, res, next) => {
+    const { email } = req.body;
+    if (!email) {
+        return next(new ErrorHandler("Please enter your email address.", 400));
+    }
 
-    const user = await User.findOne({ email: req.body.email });
+    const user = await User.findOne({ email });
 
     if (!user) {
         return next(new ErrorHandler("User not found with this email.", 404));
     }
 
     const resetToken = user.getResetPasswordToken();
-
     await user.save({ validateBeforeSave: false });
 
-    const resetPasswordUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-
+    const resetPasswordUrl = `${getFrontendUrl()}/reset-password?token=${resetToken}`;
     const message = generateForgotPasswordEmailTemplate(resetPasswordUrl);
 
     try {
@@ -462,7 +442,7 @@ export const forgotPassword = asyncHandler(async (req, res, next) => {
         res.status(200).json({
             success: true,
             message: `Email sent to ${user.email} successfully.`,
-        })
+        });
     } catch (error) {
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
@@ -471,6 +451,7 @@ export const forgotPassword = asyncHandler(async (req, res, next) => {
     }
 });
 
+// Reset Password
 export const resetPassword = asyncHandler(async (req, res, next) => {
     const { token } = req.params;
     const resetPasswordToken = crypto.createHash("sha256").update(token).digest("hex");
@@ -479,7 +460,6 @@ export const resetPassword = asyncHandler(async (req, res, next) => {
         resetPasswordToken,
         resetPasswordExpire: { $gt: Date.now() },
     });
-
 
     if (!user) {
         return next(new ErrorHandler("Invalid or expired reset password token.", 400));

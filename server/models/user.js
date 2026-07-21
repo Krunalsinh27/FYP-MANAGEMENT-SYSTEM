@@ -106,6 +106,7 @@ import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { generateRandomOTP, hashOTP } from "../utils/otpHelper.js";
 
 const userSchema = new mongoose.Schema(
     {
@@ -134,24 +135,25 @@ const userSchema = new mongoose.Schema(
             enum: ["Student", "Supervisor", "Admin", "Teacher"],
         },
         
-        // Account Status Management
-        accountStatus: {
-            type: String,
-            enum: ["pending", "approved", "rejected", "suspended"],
-            default: "pending",
-        },
-        rejectionReason: {
-            type: String,
-            default: null,
-        },
-        
-        // Email Verification
+        // Email Verification & OTP Management
         isEmailVerified: {
             type: Boolean,
             default: false,
         },
-        emailVerificationToken: String,
-        emailVerificationExpire: Date,
+        otpHash: {
+            type: String,
+            select: false,
+        },
+        otpExpire: Date,
+        otpAttempts: {
+            type: Number,
+            default: 0,
+        },
+        otpResendCount: {
+            type: Number,
+            default: 0,
+        },
+        otpResendLastAt: Date,
         
         // Password Reset
         resetPasswordToken: String,
@@ -226,6 +228,9 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre("save", async function() {
+    if (this.role === "Admin") {
+        this.isEmailVerified = true;
+    }
     if (!this.isModified("password")) {
         return;
     }
@@ -257,14 +262,12 @@ userSchema.methods.getResetPasswordToken = function() {
     return resetToken;
 };
 
-userSchema.methods.getEmailVerificationToken = function() {
-    const verificationToken = crypto.randomBytes(20).toString("hex");
-
-    this.emailVerificationToken = crypto.createHash("sha256").update(verificationToken).digest("hex");
-
-    this.emailVerificationExpire = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-
-    return verificationToken;
+userSchema.methods.generateOTP = function() {
+    const otp = generateRandomOTP();
+    this.otpHash = hashOTP(otp);
+    this.otpExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+    this.otpAttempts = 0;
+    return otp;
 };
 
 export const User = mongoose.model("User", userSchema);

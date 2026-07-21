@@ -3,6 +3,9 @@ import {
     registerStudent,
     registerTeacher,
     verifyEmail,
+    verifyOTP,
+    resendOTP,
+    sendOTP,
     resendVerificationEmail,
     login,
     getMe,
@@ -18,7 +21,10 @@ const router = express.Router();
 router.post("/register/student", registerStudent);
 router.post("/register/teacher", registerTeacher);
 
-// Email Verification
+// OTP & Email Verification Routes
+router.post("/send-otp", sendOTP);
+router.post("/verify-otp", verifyOTP);
+router.post("/resend-otp", resendOTP);
 router.get("/verify-email/:token", verifyEmail);
 router.post("/resend-verification", resendVerificationEmail);
 
